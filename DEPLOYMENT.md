@@ -416,10 +416,10 @@ For maximum availability:
 
 **Railway Configuration** (`railway.toml`):
 ```toml
-[deploy.resourceLimits]
-memoryLimit = 512  # MB
-cpuLimit = 0.5     # vCPU
-replicas = 1       # Single instance
+[deploy]
+numReplicas = 1  # Single instance only
+# Note: Railway automatically enforces free tier limits
+# Free tier: 512MB RAM, 0.5 vCPU per service
 ```
 
 ---

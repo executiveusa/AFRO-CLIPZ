@@ -11,11 +11,9 @@ restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
 
 # Cost Protection: Resource Limits
-[deploy.resourceLimits]
-# Force minimal resource allocation to stay within free tier
-memoryLimit = 512  # 512MB RAM limit
-cpuLimit = 0.5     # 0.5 vCPU limit
-replicas = 1       # Single instance only
+# Note: Railway enforces free tier limits automatically
+# These settings optimize for minimal resource usage
+numReplicas = 1  # Single instance only
 
 # Health Check Configuration
 [deploy.healthcheck]

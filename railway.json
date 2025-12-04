@@ -8,11 +8,7 @@
     "startCommand": "python app.py",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 3,
-    "numReplicas": 1,
-    "resourceLimits": {
-      "memoryMB": 512,
-      "vCPU": 0.5
-    }
+    "numReplicas": 1
   },
   "environments": {
     "production": {

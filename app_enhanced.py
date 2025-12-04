@@ -1,11 +1,18 @@
 import os
+import sys
+import json
+import ast
+import subprocess
+from datetime import datetime
+
 import whisper
 from moviepy.editor import VideoFileClip, concatenate_videoclips
 import requests
-import json
-import ast
-import sys
-from datetime import datetime
+
+try:
+    import psutil
+except ImportError:
+    psutil = None  # Optional dependency for cost monitoring
 
 # ============================================================================
 # ZERO-SECRETS ARCHITECTURE
@@ -58,10 +65,12 @@ class CostMonitor:
         if not Config.ENABLE_COST_MONITORING:
             return True, "Monitoring disabled"
         
+        if psutil is None:
+            return True, "Monitoring unavailable (psutil not installed)"
+        
         try:
             # In production, this would query actual Railway/platform metrics
             # For now, we'll implement a simple file-based check
-            import psutil
             
             # Get current memory usage
             memory_mb = psutil.Process(os.getpid()).memory_info().rss / 1024 / 1024
@@ -104,8 +113,6 @@ class CostMonitor:
 
 def transcribe_video(video_path, model_name="base"):
     """Transcribe video using Whisper"""
-    import subprocess
-    
     print(f"🎙️  Transcribing video with Whisper model: {model_name}")
     
     model = whisper.load_model(model_name)
