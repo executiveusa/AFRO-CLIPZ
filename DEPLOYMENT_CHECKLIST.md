@@ -59,7 +59,7 @@ Use this checklist to ensure successful deployment of AFRO-CLIPZ using the zero-
 ### Environment Variables (Railway)
 Zero-secrets mode (default):
 - [x] `PORT=8080` - Auto-set by Railway
-- [x] `GROQ_API_KEY=groq-key` - Stub mode (default)
+- [x] `GROQ_API_KEY=stub-key` - Stub mode (default)
 - [x] `ENABLE_COST_MONITORING=true` - Already configured
 - [x] `FREE_TIER_LIMIT_MB=500` - Already configured
 

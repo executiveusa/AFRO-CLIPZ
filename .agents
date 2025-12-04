@@ -25,7 +25,7 @@
     {
       "name": "GROQ_API_KEY",
       "description": "Groq API key for LLM inference (llama-3.1-70b-versatile model)",
-      "default": "groq-key",
+      "default": "stub-key",
       "placeholder": "gsk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
       "required": false,
       "type": "string",

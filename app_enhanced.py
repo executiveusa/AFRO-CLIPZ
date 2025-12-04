@@ -30,7 +30,7 @@ class Config:
     VIDEO_OUTPUT_PATH = os.environ.get('VIDEO_OUTPUT_PATH', 'edited_output.mp4')
     
     # API integration (safe defaults)
-    GROQ_API_KEY = os.environ.get('GROQ_API_KEY', 'groq-key')
+    GROQ_API_KEY = os.environ.get('GROQ_API_KEY', 'stub-key')
     GROQ_API_URL = os.environ.get('GROQ_API_URL', 'https://api.groq.com/openai/v1/chat/completions')
     
     # Cost protection
@@ -46,7 +46,7 @@ class Config:
     @staticmethod
     def is_api_configured():
         """Check if real API key is configured (not placeholder)"""
-        return Config.GROQ_API_KEY and Config.GROQ_API_KEY != 'groq-key' and not Config.GROQ_API_KEY.startswith('placeholder')
+        return Config.GROQ_API_KEY and Config.GROQ_API_KEY not in ['groq-key', 'stub-key'] and not Config.GROQ_API_KEY.startswith('placeholder')
 
 
 class CostMonitor:
@@ -104,13 +104,22 @@ class CostMonitor:
 
 def transcribe_video(video_path, model_name="base"):
     """Transcribe video using Whisper"""
+    import subprocess
+    
     print(f"🎙️  Transcribing video with Whisper model: {model_name}")
     
     model = whisper.load_model(model_name)
     audio_path = "temp_audio.wav"
     
-    # Extract audio using ffmpeg
-    os.system(f"ffmpeg -i {video_path} -ar 16000 -ac 1 -b:a 64k -f mp3 {audio_path} -y 2>/dev/null")
+    # Extract audio using ffmpeg (secure subprocess call)
+    try:
+        subprocess.run([
+            "ffmpeg", "-i", video_path, "-ar", "16000", "-ac", "1",
+            "-b:a", "64k", "-f", "mp3", audio_path, "-y"
+        ], check=True, capture_output=True, text=True)
+    except subprocess.CalledProcessError as e:
+        print(f"⚠️  FFmpeg warning: {e.stderr}")
+        # Continue even if ffmpeg shows warnings
     
     result = model.transcribe(audio_path)
     transcription = []

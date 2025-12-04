@@ -404,7 +404,7 @@ For maximum availability:
 | `PORT` | `8080` | Server port |
 | `PYTHON_VERSION` | `3.12` | Python runtime version |
 | `WHISPER_MODEL` | `base` | Whisper model size |
-| `GROQ_API_KEY` | `groq-key` | API key (stub default) |
+| `GROQ_API_KEY` | `stub-key` | API key (stub default) |
 | `ENABLE_COST_MONITORING` | `true` | Enable resource monitoring |
 | `FREE_TIER_LIMIT_MB` | `500` | Memory limit (MB) |
 | `AUTO_SHUTDOWN_ON_LIMIT` | `true` | Auto-shutdown on limit |

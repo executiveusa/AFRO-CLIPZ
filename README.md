@@ -189,7 +189,7 @@ cp .env.example .env
 nano .env
 
 # Key variables:
-# - GROQ_API_KEY: Your API key (or 'groq-key' for stub mode)
+# - GROQ_API_KEY: Your API key (or 'stub-key' for stub mode)
 # - WHISPER_MODEL: base, small, medium, large
 # - FREE_TIER_LIMIT_MB: Memory limit for cost protection
 ```

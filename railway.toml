@@ -38,7 +38,7 @@ VIDEO_INPUT_PATH = "input_video.mp4"
 VIDEO_OUTPUT_PATH = "edited_output.mp4"
 
 # Stubbed Integration (safe default)
-GROQ_API_KEY = "groq-key"  # Placeholder - will use mock responses
+GROQ_API_KEY = "stub-key"  # Placeholder - will use mock responses
 
 # Cost Monitoring Flags
 ENABLE_COST_MONITORING = "true"
