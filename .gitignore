@@ -1,0 +1,133 @@
+# ============================================================================
+# ZERO-SECRETS ARCHITECTURE - GIT IGNORE
+# ============================================================================
+# This file ensures no secrets, credentials, or sensitive data are committed
+
+# Secrets and Credentials
+master.secrets.json
+*.secrets.json
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.ovpn
+auth.txt
+credentials.json
+config.json
+
+# API Keys and Tokens
+*_api_key
+*_token
+*_secret
+
+# Railway/Deployment
+.railway/
+railway.json.local
+
+# Coolify
+coolify.json
+.coolify/
+
+# VPN Configuration
+vpn-config/
+*.ovpn
+openvpn/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+venv/
+ENV/
+env/
+.venv
+
+# Video Processing
+*.mp4
+*.avi
+*.mov
+*.wmv
+*.flv
+*.mkv
+!edited_output.mp4
+temp_audio.wav
+*.wav
+*.mp3
+
+# Whisper Models (cached locally)
+~/.cache/whisper/
+
+# Logs
+*.log
+logs/
+maintenance_mode.log
+vpn-healthcheck.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+*.code-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+*.bak
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+test_deployment.py
+
+# Documentation builds
+docs/_build/
+site/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Backups
+*.backup
+backups/
+
+# Monitoring and metrics
+metrics/
+monitoring/
+
+# Cost tracking data
+cost_data/
+usage_reports/
