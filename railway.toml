@@ -1,0 +1,68 @@
+# Railway.toml - Zero-Secrets Deployment Configuration
+# This file configures Railway deployment with cost-protection guardrails
+
+[build]
+builder = "NIXPACKS"
+buildCommand = "pip install -r requirements.txt"
+
+[deploy]
+startCommand = "python app.py"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+
+# Cost Protection: Resource Limits
+[deploy.resourceLimits]
+# Force minimal resource allocation to stay within free tier
+memoryLimit = 512  # 512MB RAM limit
+cpuLimit = 0.5     # 0.5 vCPU limit
+replicas = 1       # Single instance only
+
+# Health Check Configuration
+[deploy.healthcheck]
+enabled = false  # Disable for cost savings
+# If enabled later:
+# path = "/health"
+# intervalSeconds = 300
+# timeoutSeconds = 10
+
+# Environment Variables (no secrets here)
+[env]
+# Core Infrastructure
+PORT = "8080"
+PYTHON_VERSION = "3.12"
+PYTHONUNBUFFERED = "1"
+
+# Video Processing Configuration
+WHISPER_MODEL = "base"
+VIDEO_INPUT_PATH = "input_video.mp4"
+VIDEO_OUTPUT_PATH = "edited_output.mp4"
+
+# Stubbed Integration (safe default)
+GROQ_API_KEY = "groq-key"  # Placeholder - will use mock responses
+
+# Cost Monitoring Flags
+ENABLE_COST_MONITORING = "true"
+FREE_TIER_LIMIT_MB = "500"
+AUTO_SHUTDOWN_ON_LIMIT = "true"
+MAINTENANCE_MODE_ENABLED = "true"
+
+# Deployment metadata
+DEPLOYMENT_TARGET = "railway"
+DEPLOYMENT_MODE = "zero-secrets"
+
+# Railway-specific settings
+[railway]
+# Monitoring configuration for usage tracking
+monitoring = true
+
+# Free tier optimization
+[railway.optimization]
+minimize_costs = true
+use_free_tier = true
+auto_scale = false
+
+# Maintenance mode configuration
+[railway.maintenance]
+enabled = false  # Will be enabled automatically if free tier exceeded
+fallback_service = "maintenance-static"
+migration_target = "coolify"

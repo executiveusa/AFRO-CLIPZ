@@ -1,0 +1,17 @@
+# Nixpacks Configuration for Railway Deployment
+[phases.setup]
+nixPkgs = ["python312", "ffmpeg", "ffmpeg-full"]
+nixLibs = ["libGL"]
+
+[phases.install]
+cmds = ["pip install -r requirements.txt"]
+
+[phases.build]
+cmds = ["echo 'Build phase - no compilation needed'"]
+
+[start]
+cmd = "python app.py"
+
+[variables]
+PYTHON_VERSION = "3.12"
+NIXPACKS_PYTHON_VERSION = "3.12"

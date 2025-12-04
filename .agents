@@ -1,0 +1,150 @@
+{
+  "project": "AFRO-CLIPZ",
+  "description": "AI-powered video clipping application using multimodal analysis",
+  "deployment_targets": ["railway", "coolify"],
+  "runtime": "python",
+  "core": [
+    {
+      "name": "PORT",
+      "description": "Server port for the application",
+      "default": "8080",
+      "required": true,
+      "type": "number",
+      "category": "infrastructure"
+    },
+    {
+      "name": "PYTHON_VERSION",
+      "description": "Python runtime version",
+      "default": "3.12",
+      "required": true,
+      "type": "string",
+      "category": "infrastructure"
+    }
+  ],
+  "optional": [
+    {
+      "name": "GROQ_API_KEY",
+      "description": "Groq API key for LLM inference (llama-3.1-70b-versatile model)",
+      "default": "groq-key",
+      "placeholder": "gsk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "required": false,
+      "type": "string",
+      "category": "ai_services",
+      "service_url": "https://api.groq.com/openai/v1/chat/completions",
+      "documentation": "https://console.groq.com/keys",
+      "fallback_behavior": "Mock responses returned, no actual AI processing"
+    },
+    {
+      "name": "WHISPER_MODEL",
+      "description": "OpenAI Whisper model size for transcription",
+      "default": "base",
+      "options": ["tiny", "base", "small", "medium", "large"],
+      "required": false,
+      "type": "string",
+      "category": "ai_services"
+    },
+    {
+      "name": "VIDEO_INPUT_PATH",
+      "description": "Path to input video file",
+      "default": "input_video.mp4",
+      "required": false,
+      "type": "string",
+      "category": "video_processing"
+    },
+    {
+      "name": "VIDEO_OUTPUT_PATH",
+      "description": "Path to output video file",
+      "default": "edited_output.mp4",
+      "required": false,
+      "type": "string",
+      "category": "video_processing"
+    }
+  ],
+  "required_secrets": [
+    {
+      "name": "GROQ_API_KEY",
+      "purpose": "LLM API authentication for segment selection",
+      "service": "Groq",
+      "cost": "Usage-based (has free tier)",
+      "criticality": "high",
+      "alternatives": ["OpenAI API", "Anthropic Claude API", "Local LLM"]
+    }
+  ],
+  "schema": {
+    "version": "1.0",
+    "format": "json",
+    "secret_injection_method": "environment_variables",
+    "local_storage": "master.secrets.json",
+    "deployment_priority": ["railway", "coolify", "self_hosted"],
+    "cost_protection": {
+      "enabled": true,
+      "free_tier_monitoring": true,
+      "auto_shutdown_on_limit": true,
+      "maintenance_mode_fallback": true
+    }
+  },
+  "integrations": [
+    {
+      "name": "Groq API",
+      "type": "external_api",
+      "status": "optional",
+      "stubbed": true,
+      "stub_behavior": "Returns mock conversation segments without AI processing",
+      "activation_command": "Set GROQ_API_KEY environment variable with valid API key"
+    },
+    {
+      "name": "FFmpeg",
+      "type": "system_dependency",
+      "status": "required",
+      "installation": "apt-get install ffmpeg",
+      "railway_support": true
+    },
+    {
+      "name": "OpenAI Whisper",
+      "type": "ml_model",
+      "status": "required",
+      "local_compute": true,
+      "model_download": "automatic on first run"
+    }
+  ],
+  "resource_requirements": {
+    "min_ram_mb": 512,
+    "recommended_ram_mb": 2048,
+    "cpu_cores": 1,
+    "storage_gb": 2,
+    "gpu": "optional (speeds up Whisper transcription)"
+  },
+  "deployment_notes": {
+    "railway": {
+      "nixpacks_plan": "python312",
+      "buildpacks": [],
+      "install_command": "pip install -r requirements.txt",
+      "build_command": "echo 'No build required'",
+      "start_command": "python app.py",
+      "healthcheck": "none",
+      "auto_scale": false,
+      "instance_type": "hobby"
+    },
+    "coolify": {
+      "dockerfile": "optional",
+      "docker_compose": "not required",
+      "build_pack": "python",
+      "port": 8080
+    },
+    "hostinger_vpn": {
+      "enabled": false,
+      "tunnel_required": false,
+      "notes": "VPN configuration can be added if deploying behind Hostinger VPN"
+    }
+  },
+  "maintenance_mode": {
+    "trigger_conditions": [
+      "free_tier_exceeded",
+      "manual_trigger",
+      "cost_limit_reached"
+    ],
+    "landing_page": "maintenance.html",
+    "fallback_message": "Application temporarily unavailable. Migrating to new hosting.",
+    "migration_target": "coolify"
+  }
+}
