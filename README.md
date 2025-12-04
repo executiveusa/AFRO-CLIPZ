@@ -29,7 +29,7 @@ This repository now includes a **complete zero-secrets deployment architecture**
 - 🌐 Multi-platform support (Railway, Coolify, VPN)
 - 📊 Resource usage guardrails
 
-**[📖 Full Deployment Guide](./DEPLOYMENT.md)**
+**[📖 Full Deployment Guide](./DEPLOYMENT.md)** | **[✅ Deployment Checklist](./DEPLOYMENT_CHECKLIST.md)**
 
 ### Resources
 

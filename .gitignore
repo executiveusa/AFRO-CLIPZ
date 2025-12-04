@@ -109,6 +109,7 @@ Thumbs.db
 htmlcov/
 .tox/
 .nox/
+test_deployment.py
 
 # Documentation builds
 docs/_build/
