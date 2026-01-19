@@ -1,6 +1,5 @@
 import os
 import sys
-import json
 import ast
 import subprocess
 from datetime import datetime
