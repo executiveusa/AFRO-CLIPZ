@@ -1,0 +1,15 @@
+{
+  "version": "1.0",
+  "generated_at": null,
+  "assets": {},
+  "pending_uploads": [
+    {
+      "name": "afromations_flag_pick.gif",
+      "purpose": "Hero section background media",
+      "original_path": "E:\\ACTIVE PROJECTS-PIPELINE\\AFROMATIONS\\Website\\afromations_flag_pick.gif",
+      "upload_to": "/incoming/afromations_flag_pick.gif",
+      "final_location": "hero/afromations_flag_pick.gif",
+      "status": "pending"
+    }
+  ]
+}

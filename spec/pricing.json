@@ -1,0 +1,275 @@
+{
+  "currency": "USD",
+  "billing_provider": "lemon_squeezy",
+  "access_model": "invite_only",
+  "philosophy": {
+    "approach": "Hormozi-style value ladder",
+    "principles": [
+      "Sell outcomes, not usage",
+      "Scarcity + invitation > discounts",
+      "Annual / 2-year only",
+      "Anything smaller = manual approval"
+    ],
+    "outcomes_sold": [
+      "Find the story fast: turn years of footage into searchable chapters",
+      "Ship more clips: automated clipping + social-ready exports",
+      "Go multilingual: dual subtitles + dubbing pipelines",
+      "Increase performance: viral likelihood scoring + packaging suggestions",
+      "Centralize the studio: one dashboard to ingest -> edit -> approve -> publish -> measure"
+    ]
+  },
+  "plans": [
+    {
+      "id": "creator_pro",
+      "name": "Creator Pro",
+      "positioning": "Your AI assistant editor + localization studio",
+      "target_users": ["solo creators", "small edit teams"],
+      "visibility": "private",
+      "term_options": {
+        "annual": {
+          "price": 2400,
+          "effective_monthly": 200,
+          "billing_type": "prepaid"
+        },
+        "two_year": {
+          "price": 4200,
+          "discount_percent": 12.5,
+          "billing_type": "prepaid"
+        }
+      },
+      "entitlements": {
+        "seats": 3,
+        "orgs": 1,
+        "projects": 10,
+        "monthly_video_minutes": 600,
+        "languages": {
+          "subtitles": 2,
+          "dubbing": 0
+        },
+        "agents": [
+          "IngestAgent",
+          "TranscribeAgent",
+          "ClipAgent",
+          "SubtitleAgent"
+        ],
+        "integrations": [
+          "youtube",
+          "local_upload"
+        ],
+        "features": [
+          "auto_transcribe",
+          "searchable_library",
+          "ai_clipping",
+          "dual_subtitles",
+          "basic_thumbnail",
+          "viral_packaging_suggestions"
+        ],
+        "branding": "afromations"
+      },
+      "limits": {
+        "batch_processing_only": true,
+        "max_concurrent_jobs": 2,
+        "throttle_on_exceed": true,
+        "overage_allowed": false
+      }
+    },
+    {
+      "id": "studio",
+      "name": "Studio",
+      "positioning": "Pixar-style departments - agents in containers - managed studio pipeline",
+      "target_users": ["serious creators", "local production companies", "agencies"],
+      "visibility": "private",
+      "term_options": {
+        "annual": {
+          "price": 9600,
+          "effective_monthly": 800,
+          "billing_type": "prepaid"
+        },
+        "two_year": {
+          "price": 16800,
+          "discount_percent": 12.5,
+          "billing_type": "prepaid"
+        }
+      },
+      "entitlements": {
+        "seats": 10,
+        "orgs": 1,
+        "projects": 50,
+        "monthly_video_minutes": 3000,
+        "languages": {
+          "subtitles": 4,
+          "dubbing": 2
+        },
+        "agents": [
+          "ProducerAgent",
+          "IngestAgent",
+          "TranscribeAgent",
+          "SceneAgent",
+          "ClipAgent",
+          "ViralScoreAgent",
+          "SubtitleAgent",
+          "DubAgent",
+          "ThumbnailAgent",
+          "PublisherAgent"
+        ],
+        "integrations": [
+          "youtube",
+          "google_drive",
+          "onedrive",
+          "local_upload"
+        ],
+        "features": [
+          "multi_agent_departments",
+          "dub_pipeline",
+          "clip_ranking",
+          "story_arcs",
+          "timelines",
+          "model_switching_hf",
+          "basic_white_label",
+          "priority_queue"
+        ],
+        "branding": "studio_custom"
+      },
+      "limits": {
+        "batch_processing_only": false,
+        "max_concurrent_jobs": 6
+      },
+      "value_proposition": {
+        "pain_solved": "Turns weeks of review/edit into hours of review/approve",
+        "outcome": "Solves multilingual reach (sub/dub) without vendor wrangling"
+      }
+    },
+    {
+      "id": "black_label",
+      "name": "Black Label",
+      "positioning": "Autonomous studio ops + custom agents + private deployment",
+      "target_users": ["high-volume creators", "funded media", "cultural archives"],
+      "visibility": "invite_only",
+      "contact_required": true,
+      "starting_price": {
+        "annual": 36000,
+        "two_year": 60000
+      },
+      "entitlements": {
+        "seats": "unlimited",
+        "orgs": "unlimited",
+        "projects": "unlimited",
+        "monthly_video_minutes": "custom",
+        "languages": {
+          "subtitles": "custom",
+          "dubbing": "custom"
+        },
+        "agents": "all + custom",
+        "integrations": "all + custom",
+        "features": [
+          "dedicated_deployment",
+          "private_model_hosting",
+          "custom_department_agents",
+          "custom_workflows",
+          "advanced_localization",
+          "virality_testing_framework",
+          "thumbnail_title_ab_testing",
+          "scheduling_recommendations",
+          "sla_support",
+          "weekly_studio_ops_review",
+          "agent_learning_loop",
+          "prompt_registry_governance"
+        ],
+        "deployment": "dedicated",
+        "branding": "white_label"
+      },
+      "limits": {
+        "sla": true,
+        "custom_agents": true,
+        "dedicated_support": true
+      }
+    }
+  ],
+  "policies": {
+    "no_monthly": true,
+    "no_discounts": true,
+    "special_cases": "manual_review",
+    "invite_mechanics": {
+      "invite_required_before_checkout": true,
+      "cohort_naming": ["Seattle Creator Cohort", "I-5 Corridor Cohort"],
+      "ui_language": [
+        "Applications open in limited waves",
+        "Invite required"
+      ]
+    }
+  },
+  "billing_flow": {
+    "steps": [
+      "User applies / receives invite",
+      "Invite code unlocks checkout visibility",
+      "Checkout creates customer via Lemon Squeezy",
+      "Webhook confirms payment",
+      "Entitlement written to billing_subscriptions table",
+      "App gates features by entitlement"
+    ],
+    "webhook_events": [
+      {
+        "event": "subscription_created",
+        "action": "create_entitlement",
+        "state": "active"
+      },
+      {
+        "event": "subscription_updated",
+        "action": "update_entitlement",
+        "state": "active"
+      },
+      {
+        "event": "subscription_cancelled",
+        "action": "schedule_downgrade",
+        "state": "grace_period"
+      },
+      {
+        "event": "subscription_expired",
+        "action": "disable_entitlement",
+        "state": "inactive"
+      },
+      {
+        "event": "subscription_payment_failed",
+        "action": "mark_past_due",
+        "state": "past_due"
+      }
+    ],
+    "entitlement_state_machine": {
+      "states": ["pending", "active", "past_due", "grace_period", "inactive"],
+      "transitions": {
+        "pending_to_active": "on payment confirmed",
+        "active_to_past_due": "on payment failed",
+        "past_due_to_active": "on payment retry success",
+        "active_to_grace_period": "on cancellation (access until period end)",
+        "grace_period_to_inactive": "on period end"
+      }
+    }
+  },
+  "feature_gating": {
+    "strategy": "entitlement-based",
+    "gates": [
+      {
+        "feature": "multi_source_ingest",
+        "requires": ["studio", "black_label"]
+      },
+      {
+        "feature": "dubbing",
+        "requires": ["studio", "black_label"]
+      },
+      {
+        "feature": "custom_agents",
+        "requires": ["black_label"]
+      },
+      {
+        "feature": "white_label",
+        "requires": ["black_label"]
+      },
+      {
+        "feature": "sla_support",
+        "requires": ["black_label"]
+      }
+    ],
+    "enforcement": "silent_gate",
+    "ui_behavior": "hide unavailable features, no teasing"
+  }
+}
