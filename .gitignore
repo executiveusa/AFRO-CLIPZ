@@ -131,3 +131,15 @@ monitoring/
 # Cost tracking data
 cost_data/
 usage_reports/
+
+# ============================================================================
+# ASSET MANAGEMENT
+# ============================================================================
+# Staging directory for uploaded assets (raw uploads are git-ignored)
+/incoming/*
+!/incoming/.gitkeep
+!/incoming/README.md
+
+# Large binary assets (use Git LFS for these)
+# *.gif  # Uncomment if using Git LFS for GIFs
+# *.png  # Uncomment if using Git LFS for large PNGs

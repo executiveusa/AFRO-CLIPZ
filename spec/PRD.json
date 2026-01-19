@@ -1,0 +1,262 @@
+{
+  "product": {
+    "name": "AfroMations",
+    "tagline": "AI documentary + clipping studio for Seattle/Washington creators",
+    "version": "1.0.0",
+    "positioning": {
+      "region_focus": ["Seattle", "Tacoma", "Everett", "Olympia", "Bellingham", "I-5 corridor"],
+      "primary_users": ["video editors", "documentary creators", "cultural archivists", "music video teams"],
+      "core_pain_points": [
+        "Too much footage to review",
+        "Finding highlight moments is slow",
+        "Subtitles/dubbing are time-consuming",
+        "Publishing workflows are fragmented",
+        "Thumbnails and titles are inconsistent",
+        "Hard to predict what will perform well",
+        "Tools are expensive or locked-in"
+      ]
+    },
+    "design_philosophy": {
+      "aesthetic": "museum-quality software, not SaaS clutter",
+      "inspiration": ["Pixar internal tools", "Apple Pro apps", "High-end DAWs"],
+      "anti_patterns": ["Dense dashboards", "Noisy grids", "Cluttered cards"],
+      "visual_dna": {
+        "core_identity": ["Minimal", "Thoughtful", "Cultural", "Futuristic but grounded"],
+        "hero_style": {
+          "aesthetic": "hand-drawn / sketch feel",
+          "negative_space": "high (white dominance)",
+          "focal_elements": "single dominant per screen",
+          "color_scheme": "grayscale base + single green accent"
+        }
+      }
+    }
+  },
+  "non_functional_requirements": {
+    "open_source_first": true,
+    "deployment_targets": ["Coolify", "Hostinger VPS", "Docker anywhere"],
+    "privacy": {
+      "no_secrets_in_logs": true,
+      "secrets_management": ["dotenv", "docker_secrets", "coolify_env"]
+    },
+    "reliability": {
+      "python_automation_preferred": true,
+      "webhooks_retriable": true,
+      "idempotent_jobs": true
+    },
+    "path_constraints": {
+      "local_paths_inaccessible": true,
+      "blocked_patterns": ["E:\\\\*", "C:\\\\Users\\\\*", "D:\\\\*"],
+      "asset_staging_dir": "/incoming",
+      "asset_output_dir": "/assets",
+      "manifest_path": "/assets/manifest.json"
+    }
+  },
+  "architecture": {
+    "orchestrator": {
+      "name": "Agent Zero",
+      "role": "primary runtime orchestrator",
+      "interfaces": ["REST", "WebSocket"],
+      "repository": "https://github.com/agent0ai/agent-zero"
+    },
+    "trainer": {
+      "name": "Agent Lightning",
+      "role": "agent optimization / learning layer",
+      "telemetry": ["episodes", "traces", "prompt_versions"],
+      "repository": "https://github.com/microsoft/agent-lightning"
+    },
+    "services": [
+      {
+        "name": "clipper",
+        "base_repo": "AFRO-CLIPZ",
+        "language": "python",
+        "api": ["/api/clip", "/api/health"],
+        "notes": "keep compatibility with app_enhanced.py then refactor into FastAPI later"
+      },
+      {
+        "name": "orchestrator-api",
+        "language": "python",
+        "framework": "FastAPI",
+        "responsibilities": ["auth session", "job create", "job status stream", "agent dispatch"],
+        "queue": "redis"
+      },
+      {
+        "name": "media-indexer",
+        "language": "python",
+        "responsibilities": ["transcribe", "scene detect", "embeddings", "search index"]
+      },
+      {
+        "name": "publisher",
+        "language": "python",
+        "responsibilities": ["youtube upload", "metadata", "scheduling", "shorts export"]
+      }
+    ],
+    "web_app": {
+      "framework": "Next.js",
+      "router": "App Router",
+      "ui_stack": ["TanStack Query", "TanStack Table", "TanStack Router (optional)"],
+      "requirements": ["full_page_hero", "dashboard", "realtime_job_updates"],
+      "ui_rules": {
+        "no_dashboards_full_of_boxes": true,
+        "no_dense_grids": true,
+        "no_noisy_cards": true,
+        "no_saas_clutter": true,
+        "every_screen_hero_first": true,
+        "one_dominant_focal_area": true,
+        "one_primary_action": true,
+        "secondary_actions_hidden_until_intent": true
+      }
+    },
+    "data": {
+      "db": "Postgres",
+      "provider": "Supabase",
+      "tables": ["users", "orgs", "projects", "assets", "clips", "jobs", "billing", "agent_memory"],
+      "vector_store": ["pgvector (preferred)", "optional external"]
+    },
+    "monorepo_structure": {
+      "services/clipper": "AFRO-CLIPZ microservice",
+      "services/orchestrator": "Agent Zero integration + API gateway",
+      "services/trainer": "Agent Lightning integration",
+      "services/media-indexer": "transcribe, scene detect, embeddings",
+      "services/publisher": "YouTube upload + metadata + scheduling",
+      "apps/web": "Next.js + TanStack libs, full-page hero",
+      "infra": "docker compose, coolify manifests"
+    }
+  },
+  "integrations": {
+    "auth": {
+      "provider": "Google OAuth",
+      "implementation": "NextAuth or Supabase Auth"
+    },
+    "billing": {
+      "provider": "Lemon Squeezy",
+      "capabilities": ["create_checkout", "webhooks", "license_or_subscription_state"],
+      "docs_url": "https://docs.lemonsqueezy.com"
+    },
+    "observability": {
+      "provider": "Sentry",
+      "features": ["error_tracking", "performance_tracing"]
+    },
+    "models": {
+      "default": "Hugging Face self-host",
+      "optional": ["GLM vision/image provider (feature-flagged)"],
+      "model_registry": "Hugging Face",
+      "local_models": {
+        "asr": "faster-whisper",
+        "translation": "NLLB-200",
+        "embeddings": "sentence-transformers",
+        "tts": "Coqui TTS / Piper"
+      }
+    }
+  },
+  "agents": [
+    {"name": "ProducerAgent", "department": "Production", "containerized": true, "persistent_memory": true, "responsibility": "project planning, deliverables"},
+    {"name": "IngestAgent", "department": "Ingest", "containerized": true, "persistent_memory": true, "responsibility": "pulls from Drive/OneDrive/local/YouTube"},
+    {"name": "TranscribeAgent", "department": "Audio", "containerized": true, "persistent_memory": true, "responsibility": "Whisper/ASR transcription"},
+    {"name": "SceneAgent", "department": "Editorial", "containerized": true, "persistent_memory": true, "responsibility": "scene detection + embeddings"},
+    {"name": "ClipAgent", "department": "Editorial", "containerized": true, "persistent_memory": true, "responsibility": "calls clipper service"},
+    {"name": "ViralScoreAgent", "department": "Marketing", "containerized": true, "persistent_memory": true, "responsibility": "scoring heuristics + model-assisted ranking"},
+    {"name": "SubtitleAgent", "department": "Localization", "containerized": true, "persistent_memory": true, "responsibility": "dual subtitles generation"},
+    {"name": "DubAgent", "department": "Localization", "containerized": true, "persistent_memory": true, "responsibility": "TTS dubbing"},
+    {"name": "ThumbnailAgent", "department": "Design", "containerized": true, "persistent_memory": true, "responsibility": "image generation"},
+    {"name": "PublisherAgent", "department": "Distribution", "containerized": true, "persistent_memory": true, "responsibility": "YouTube publishing"},
+    {"name": "ComplianceAgent", "department": "Ops", "containerized": true, "persistent_memory": true, "responsibility": "permissions, rights, export rules"}
+  ],
+  "cost_controls": {
+    "bff_budget_enforcement": {
+      "token_ceilings_per_job": true,
+      "token_ceilings_per_org": true,
+      "token_ceilings_per_day": true,
+      "model_routing": "cheap model for classification, bigger for final outputs"
+    },
+    "caching": {
+      "cache_transcripts": true,
+      "cache_scene_boundaries": true,
+      "cache_embeddings": true,
+      "cache_clip_candidates": true,
+      "cache_translations": true,
+      "cache_key_pattern": "content_hash + model_version + prompt_version"
+    },
+    "batch_processing": {
+      "overnight_batch_modes": true,
+      "heavy_tasks": ["transcribe", "scene_detect", "embeddings"]
+    },
+    "rag_before_generation": {
+      "build_index_once": true,
+      "query_cheaply": true,
+      "never_summarize_whole_library": true
+    },
+    "two_step_inference": {
+      "step_1": "small model narrows candidates (top 2-5%)",
+      "step_2": "larger model refines only those"
+    }
+  },
+  "phases": [
+    {
+      "name": "Phase 1 - Tonight MVP",
+      "goals": [
+        "Landing hero + Explore -> dashboard",
+        "Google Auth",
+        "Lemon Squeezy billing gate",
+        "Upload local sample footage",
+        "Run clip job via clipper service",
+        "View/export clips",
+        "Deploy with Docker on Coolify"
+      ],
+      "definition_of_done": [
+        "E2E test passes",
+        "Webhook endpoints idempotent",
+        "No secrets in logs",
+        "Sentry captures errors",
+        "Docs/spec are canonical"
+      ]
+    },
+    {
+      "name": "Phase 2 - Studio Expansion",
+      "goals": [
+        "Drive/OneDrive/YouTube ingest connectors",
+        "Dual subtitles + dubbing",
+        "Viral scoring + ranking",
+        "Asset library + search",
+        "Thumbnail generation (HF default, GLM optional)"
+      ]
+    },
+    {
+      "name": "Phase 3 - White-label + Learning",
+      "goals": [
+        "Multi-tenant white-label",
+        "Agent Lightning optimization runs",
+        "Model marketplace switching (HF)",
+        "Reusable templates for creator sites"
+      ]
+    }
+  ],
+  "deliverables": {
+    "docs": [
+      "/docs/PRD.md",
+      "/docs/ARCHITECTURE.md",
+      "/docs/JOB_COMPLETION_PROTOCOL.md",
+      "/docs/RALPH_WIGGINS_LOOP.md",
+      "/docs/AGENT_CATALOG.md",
+      "/docs/PATH_CONSTRAINTS.md"
+    ],
+    "specs": [
+      "/spec/PRD.json",
+      "/spec/PRD.xml",
+      "/spec/pricing.json",
+      "/spec/API.openapi.json"
+    ],
+    "infra": [
+      "/infra/docker-compose.yml",
+      "/.env.example"
+    ],
+    "required_assets": [
+      {
+        "name": "afromations_flag_pick.gif",
+        "purpose": "Hero section background media",
+        "original_path": "E:\\ACTIVE PROJECTS-PIPELINE\\AFROMATIONS\\Website\\afromations_flag_pick.gif",
+        "upload_to": "/incoming/afromations_flag_pick.gif",
+        "final_location": "/assets/hero/afromations_flag_pick.gif"
+      }
+    ]
+  }
+}

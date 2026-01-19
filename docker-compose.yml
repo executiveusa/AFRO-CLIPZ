@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  # Main web application
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${PORT:-8080}:8080"
+    environment:
+      - PORT=8080
+      - DEBUG=${DEBUG:-false}
+      - PYTHONUNBUFFERED=1
+      # Auth
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
+      - SESSION_SECRET=${SESSION_SECRET:-}
+      # Billing
+      - LEMON_SQUEEZY_API_KEY=${LEMON_SQUEEZY_API_KEY:-}
+      - LEMON_SQUEEZY_STORE_ID=${LEMON_SQUEEZY_STORE_ID:-}
+      - LEMON_SQUEEZY_WEBHOOK_SECRET=${LEMON_SQUEEZY_WEBHOOK_SECRET:-}
+      # Database
+      - SUPABASE_URL=${SUPABASE_URL:-}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-}
+      # AI/ML
+      - GROQ_API_KEY=${GROQ_API_KEY:-stub-key}
+      - WHISPER_MODEL=${WHISPER_MODEL:-base}
+      # Observability
+      - SENTRY_DSN=${SENTRY_DSN:-}
+      # Feature flags
+      - INVITE_ONLY=${INVITE_ONLY:-true}
+    volumes:
+      - ./assets:/app/assets:ro
+      - ./incoming:/app/incoming
+      - whisper_cache:/root/.cache/whisper
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+volumes:
+  whisper_cache:
+    driver: local

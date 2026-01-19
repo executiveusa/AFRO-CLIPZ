@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AfroMationsSpec version="1.0">
+  <Product>
+    <Name>AfroMations</Name>
+    <Tagline>AI documentary + clipping studio for Seattle/Washington creators</Tagline>
+    <Version>1.0.0</Version>
+    <RegionFocus>
+      <City>Seattle</City>
+      <City>Tacoma</City>
+      <City>Everett</City>
+      <City>Olympia</City>
+      <City>Bellingham</City>
+      <Corridor>I-5</Corridor>
+    </RegionFocus>
+    <DesignPhilosophy>
+      <Aesthetic>museum-quality software, not SaaS clutter</Aesthetic>
+      <Inspiration>Pixar internal tools</Inspiration>
+      <Inspiration>Apple Pro apps</Inspiration>
+      <Inspiration>High-end DAWs</Inspiration>
+      <AntiPattern>Dense dashboards</AntiPattern>
+      <AntiPattern>Noisy grids</AntiPattern>
+      <AntiPattern>Cluttered cards</AntiPattern>
+    </DesignPhilosophy>
+  </Product>
+
+  <PathConstraints>
+    <Description>CloudCo/Claude Code cannot read local Windows paths</Description>
+    <BlockedPatterns>
+      <Pattern>E:\*</Pattern>
+      <Pattern>C:\Users\*</Pattern>
+      <Pattern>D:\*</Pattern>
+    </BlockedPatterns>
+    <AssetStagingDir>/incoming</AssetStagingDir>
+    <AssetOutputDir>/assets</AssetOutputDir>
+    <ManifestPath>/assets/manifest.json</ManifestPath>
+    <OrganizerScript>python tools/organize_assets.py --input /incoming --output /assets --manifest /assets/manifest.json</OrganizerScript>
+  </PathConstraints>
+
+  <Architecture>
+    <Orchestrator name="Agent Zero" role="runtime-orchestrator">
+      <Interface>REST</Interface>
+      <Interface>WebSocket</Interface>
+      <Repository>https://github.com/agent0ai/agent-zero</Repository>
+    </Orchestrator>
+    <Trainer name="Agent Lightning" role="agent-optimization">
+      <Telemetry>episodes</Telemetry>
+      <Telemetry>traces</Telemetry>
+      <Telemetry>prompt_versions</Telemetry>
+      <Repository>https://github.com/microsoft/agent-lightning</Repository>
+    </Trainer>
+
+    <Services>
+      <Service name="clipper" baseRepo="AFRO-CLIPZ" language="python">
+        <Api>/api/clip</Api>
+        <Api>/api/health</Api>
+        <Note>Keep compatibility with app_enhanced.py then refactor into FastAPI later</Note>
+      </Service>
+      <Service name="orchestrator-api" language="python" framework="FastAPI" queue="redis">
+        <Responsibility>auth session</Responsibility>
+        <Responsibility>job create</Responsibility>
+        <Responsibility>job status stream</Responsibility>
+        <Responsibility>agent dispatch</Responsibility>
+      </Service>
+      <Service name="media-indexer" language="python">
+        <Responsibility>transcribe</Responsibility>
+        <Responsibility>scene detect</Responsibility>
+        <Responsibility>embeddings</Responsibility>
+        <Responsibility>search index</Responsibility>
+      </Service>
+      <Service name="publisher" language="python">
+        <Responsibility>youtube upload</Responsibility>
+        <Responsibility>metadata</Responsibility>
+        <Responsibility>scheduling</Responsibility>
+        <Responsibility>shorts export</Responsibility>
+      </Service>
+    </Services>
+
+    <MonorepoStructure>
+      <Directory path="services/clipper">AFRO-CLIPZ microservice</Directory>
+      <Directory path="services/orchestrator">Agent Zero integration + API gateway</Directory>
+      <Directory path="services/trainer">Agent Lightning integration</Directory>
+      <Directory path="services/media-indexer">transcribe, scene detect, embeddings</Directory>
+      <Directory path="services/publisher">YouTube upload + metadata + scheduling</Directory>
+      <Directory path="apps/web">Next.js + TanStack libs, full-page hero</Directory>
+      <Directory path="infra">docker compose, coolify manifests</Directory>
+    </MonorepoStructure>
+
+    <WebApp framework="Next.js" router="AppRouter">
+      <UIStack>TanStack Query</UIStack>
+      <UIStack>TanStack Table</UIStack>
+      <UIStack>TanStack Router (optional)</UIStack>
+      <Requirement>FullPageHero</Requirement>
+      <Requirement>Dashboard</Requirement>
+      <Requirement>RealtimeJobUpdates</Requirement>
+      <UIRules>
+        <Rule name="no_dashboards_full_of_boxes">true</Rule>
+        <Rule name="no_dense_grids">true</Rule>
+        <Rule name="no_noisy_cards">true</Rule>
+        <Rule name="no_saas_clutter">true</Rule>
+        <Rule name="every_screen_hero_first">true</Rule>
+        <Rule name="one_dominant_focal_area">true</Rule>
+        <Rule name="one_primary_action">true</Rule>
+        <Rule name="secondary_actions_hidden_until_intent">true</Rule>
+      </UIRules>
+    </WebApp>
+
+    <Data>
+      <Database provider="Supabase" type="Postgres"/>
+      <Tables>
+        <Table>users</Table>
+        <Table>orgs</Table>
+        <Table>projects</Table>
+        <Table>assets</Table>
+        <Table>clips</Table>
+        <Table>jobs</Table>
+        <Table>billing</Table>
+        <Table>agent_memory</Table>
+      </Tables>
+      <VectorStore>pgvector</VectorStore>
+    </Data>
+  </Architecture>
+
+  <Integrations>
+    <Auth provider="GoogleOAuth" implementation="NextAuth or Supabase Auth"/>
+    <Billing provider="LemonSqueezy" docsUrl="https://docs.lemonsqueezy.com">
+      <Feature>CreateCheckout</Feature>
+      <Feature>Webhooks</Feature>
+      <Feature>LicenseOrSubscriptionState</Feature>
+    </Billing>
+    <Observability provider="Sentry">
+      <Feature>ErrorTracking</Feature>
+      <Feature>PerformanceTracing</Feature>
+    </Observability>
+    <Models>
+      <Default>HuggingFaceSelfHost</Default>
+      <Optional featureFlag="true">GLM_Vision_ImageProvider</Optional>
+      <LocalModel type="asr">faster-whisper</LocalModel>
+      <LocalModel type="translation">NLLB-200</LocalModel>
+      <LocalModel type="embeddings">sentence-transformers</LocalModel>
+      <LocalModel type="tts">Coqui TTS / Piper</LocalModel>
+    </Models>
+  </Integrations>
+
+  <Agents>
+    <Agent name="ProducerAgent" department="Production" containerized="true" persistentMemory="true">
+      <Responsibility>project planning, deliverables</Responsibility>
+    </Agent>
+    <Agent name="IngestAgent" department="Ingest" containerized="true" persistentMemory="true">
+      <Responsibility>pulls from Drive/OneDrive/local/YouTube</Responsibility>
+    </Agent>
+    <Agent name="TranscribeAgent" department="Audio" containerized="true" persistentMemory="true">
+      <Responsibility>Whisper/ASR transcription</Responsibility>
+    </Agent>
+    <Agent name="SceneAgent" department="Editorial" containerized="true" persistentMemory="true">
+      <Responsibility>scene detection + embeddings</Responsibility>
+    </Agent>
+    <Agent name="ClipAgent" department="Editorial" containerized="true" persistentMemory="true">
+      <Responsibility>calls clipper service</Responsibility>
+    </Agent>
+    <Agent name="ViralScoreAgent" department="Marketing" containerized="true" persistentMemory="true">
+      <Responsibility>scoring heuristics + model-assisted ranking</Responsibility>
+    </Agent>
+    <Agent name="SubtitleAgent" department="Localization" containerized="true" persistentMemory="true">
+      <Responsibility>dual subtitles generation</Responsibility>
+    </Agent>
+    <Agent name="DubAgent" department="Localization" containerized="true" persistentMemory="true">
+      <Responsibility>TTS dubbing</Responsibility>
+    </Agent>
+    <Agent name="ThumbnailAgent" department="Design" containerized="true" persistentMemory="true">
+      <Responsibility>image generation</Responsibility>
+    </Agent>
+    <Agent name="PublisherAgent" department="Distribution" containerized="true" persistentMemory="true">
+      <Responsibility>YouTube publishing</Responsibility>
+    </Agent>
+    <Agent name="ComplianceAgent" department="Ops" containerized="true" persistentMemory="true">
+      <Responsibility>permissions, rights, export rules</Responsibility>
+    </Agent>
+  </Agents>
+
+  <CostControls>
+    <BFFBudgetEnforcement>
+      <TokenCeilings scope="per_job">true</TokenCeilings>
+      <TokenCeilings scope="per_org">true</TokenCeilings>
+      <TokenCeilings scope="per_day">true</TokenCeilings>
+      <ModelRouting>cheap model for classification, bigger for final outputs</ModelRouting>
+    </BFFBudgetEnforcement>
+    <Caching>
+      <CacheTarget>transcripts</CacheTarget>
+      <CacheTarget>scene_boundaries</CacheTarget>
+      <CacheTarget>embeddings</CacheTarget>
+      <CacheTarget>clip_candidates</CacheTarget>
+      <CacheTarget>translations</CacheTarget>
+      <CacheKeyPattern>content_hash + model_version + prompt_version</CacheKeyPattern>
+    </Caching>
+    <BatchProcessing>
+      <OvernightBatchModes>true</OvernightBatchModes>
+      <HeavyTask>transcribe</HeavyTask>
+      <HeavyTask>scene_detect</HeavyTask>
+      <HeavyTask>embeddings</HeavyTask>
+    </BatchProcessing>
+    <TwoStepInference>
+      <Step1>small model narrows candidates (top 2-5%)</Step1>
+      <Step2>larger model refines only those</Step2>
+    </TwoStepInference>
+  </CostControls>
+
+  <Phases>
+    <Phase name="Phase 1 - Tonight MVP">
+      <Goal>Hero+ExploreToDashboard</Goal>
+      <Goal>GoogleAuth</Goal>
+      <Goal>LemonSqueezyBillingGate</Goal>
+      <Goal>UploadLocalFootage</Goal>
+      <Goal>ClipJobViaClipper</Goal>
+      <Goal>ViewExportClips</Goal>
+      <Goal>DeployOnCoolify</Goal>
+      <DefinitionOfDone>E2E test passes</DefinitionOfDone>
+      <DefinitionOfDone>Webhook endpoints idempotent</DefinitionOfDone>
+      <DefinitionOfDone>No secrets in logs</DefinitionOfDone>
+      <DefinitionOfDone>Sentry captures errors</DefinitionOfDone>
+      <DefinitionOfDone>Docs/spec are canonical</DefinitionOfDone>
+    </Phase>
+    <Phase name="Phase 2 - Studio Expansion">
+      <Goal>DriveOneDriveYouTubeIngest</Goal>
+      <Goal>DualSubtitlesAndDubbing</Goal>
+      <Goal>ViralScoringRanking</Goal>
+      <Goal>AssetLibrarySearch</Goal>
+      <Goal>ThumbnailGeneration</Goal>
+    </Phase>
+    <Phase name="Phase 3 - WhiteLabel + Learning">
+      <Goal>MultiTenantWhiteLabel</Goal>
+      <Goal>AgentLightningOptimization</Goal>
+      <Goal>HFModelMarketplaceSwitching</Goal>
+      <Goal>ReusableCreatorTemplates</Goal>
+    </Phase>
+  </Phases>
+
+  <RequiredAssets>
+    <Asset name="afromations_flag_pick.gif" purpose="Hero section background media">
+      <OriginalPath>E:\ACTIVE PROJECTS-PIPELINE\AFROMATIONS\Website\afromations_flag_pick.gif</OriginalPath>
+      <UploadTo>/incoming/afromations_flag_pick.gif</UploadTo>
+      <FinalLocation>/assets/hero/afromations_flag_pick.gif</FinalLocation>
+    </Asset>
+  </RequiredAssets>
+</AfroMationsSpec>

@@ -6,7 +6,7 @@ builder = "NIXPACKS"
 buildCommand = "pip install -r requirements.txt"
 
 [deploy]
-startCommand = "python app.py"
+startCommand = "uvicorn web:app --host 0.0.0.0 --port ${PORT:-8080}"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
 
@@ -17,11 +17,10 @@ numReplicas = 1  # Single instance only
 
 # Health Check Configuration
 [deploy.healthcheck]
-enabled = false  # Disable for cost savings
-# If enabled later:
-# path = "/health"
-# intervalSeconds = 300
-# timeoutSeconds = 10
+enabled = true
+path = "/api/health"
+intervalSeconds = 300
+timeoutSeconds = 10
 
 # Environment Variables (no secrets here)
 [env]
@@ -42,7 +41,7 @@ GROQ_API_KEY = "stub-key"  # Placeholder - will use mock responses
 ENABLE_COST_MONITORING = "true"
 FREE_TIER_LIMIT_MB = "500"
 AUTO_SHUTDOWN_ON_LIMIT = "true"
-MAINTENANCE_MODE_ENABLED = "true"
+MAINTENANCE_MODE_ENABLED = "false"
 
 # Deployment metadata
 DEPLOYMENT_TARGET = "railway"
