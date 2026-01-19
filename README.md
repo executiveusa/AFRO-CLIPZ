@@ -1,14 +1,15 @@
-# AFRO-CLIPZ 🎬
+# AfroMations | AI Documentary Studio
 
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template)
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template?template=https://github.com/executiveusa/AFRO-CLIPZ)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/executiveusa/AFRO-CLIPZ)
 
-Clip any moment from any video with AI-powered prompts
+**Transform your footage into stories** — AI-powered documentary and clipping studio for Seattle/Washington creators.
 
-Multimodal AI clipping that lets you clip any moment from any video using visual, audio, and sentiment cues
+Built on AFRO-CLIPZ: Multimodal AI clipping that lets you clip any moment from any video using visual, audio, and sentiment cues.
 
-Just type your prompt.
+## Quick Deploy
 
-AI will clip the right moments for you from any video.
+**[📖 Deploy Now Guide](./DEPLOY_NOW.md)** — One-click deployment to Railway, Render, or Docker
 
 ## ✨ New: Zero-Secrets Railway Deployment
 
