@@ -1,0 +1,33 @@
+# Render.com Blueprint
+# Deploy with: https://render.com/deploy?repo=https://github.com/executiveusa/AFRO-CLIPZ
+
+services:
+  - type: web
+    name: afromations
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn web:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: DEBUG
+        value: false
+      - key: INVITE_ONLY
+        value: true
+      # Secrets - set these in Render dashboard
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: LEMON_SQUEEZY_API_KEY
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
