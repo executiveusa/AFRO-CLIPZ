@@ -1,13 +1,13 @@
 """
 AfroMations - AI Documentary & Clipping Studio
-FastAPI Web Application
+World-Class Design Implementation
 
-This is the main web server that serves:
-- Hero landing page
-- Authentication (Google OAuth)
-- Billing integration (Lemon Squeezy)
-- Clip API endpoints
-- Dashboard
+Design Philosophy:
+- Museum-quality software, not SaaS clutter
+- Steve Krug's "Don't Make Me Think" principles
+- Motion Primitives + TweakCN inspired components
+- One dominant focal area per screen
+- Progressive disclosure
 """
 
 import os
@@ -25,45 +25,27 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
 import uvicorn
 
-# ============================================================================
-# Configuration
-# ============================================================================
 
 class Settings:
     """Application settings from environment variables"""
-
-    # Server
     PORT: int = int(os.environ.get('PORT', 8080))
     HOST: str = os.environ.get('HOST', '0.0.0.0')
     DEBUG: bool = os.environ.get('DEBUG', 'false').lower() == 'true'
-
-    # Auth
     GOOGLE_CLIENT_ID: str = os.environ.get('GOOGLE_CLIENT_ID', '')
     GOOGLE_CLIENT_SECRET: str = os.environ.get('GOOGLE_CLIENT_SECRET', '')
     SESSION_SECRET: str = os.environ.get('SESSION_SECRET', secrets.token_hex(32))
-
-    # Billing
     LEMON_SQUEEZY_API_KEY: str = os.environ.get('LEMON_SQUEEZY_API_KEY', '')
     LEMON_SQUEEZY_STORE_ID: str = os.environ.get('LEMON_SQUEEZY_STORE_ID', '')
     LEMON_SQUEEZY_WEBHOOK_SECRET: str = os.environ.get('LEMON_SQUEEZY_WEBHOOK_SECRET', '')
-
-    # Database (Supabase)
     SUPABASE_URL: str = os.environ.get('SUPABASE_URL', '')
     SUPABASE_ANON_KEY: str = os.environ.get('SUPABASE_ANON_KEY', '')
-
-    # Observability
     SENTRY_DSN: str = os.environ.get('SENTRY_DSN', '')
-
-    # AI/ML
     GROQ_API_KEY: str = os.environ.get('GROQ_API_KEY', '')
     WHISPER_MODEL: str = os.environ.get('WHISPER_MODEL', 'base')
-
-    # Feature flags
     INVITE_ONLY: bool = os.environ.get('INVITE_ONLY', 'true').lower() == 'true'
 
     @classmethod
     def is_configured(cls, *keys: str) -> bool:
-        """Check if all specified settings are configured"""
         for key in keys:
             value = getattr(cls, key, '')
             if not value or value.startswith('stub') or value.startswith('placeholder'):
@@ -71,10 +53,6 @@ class Settings:
         return True
 
 settings = Settings()
-
-# ============================================================================
-# FastAPI Application
-# ============================================================================
 
 app = FastAPI(
     title="AfroMations",
@@ -84,7 +62,6 @@ app = FastAPI(
     redoc_url="/api/redoc" if settings.DEBUG else None,
 )
 
-# CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -93,17 +70,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ============================================================================
-# In-Memory Session Store (replace with Redis/DB in production)
-# ============================================================================
-
 sessions: Dict[str, Dict[str, Any]] = {}
-invites: Dict[str, Dict[str, Any]] = {}  # invite_code -> {email, plan, created_at}
-users: Dict[str, Dict[str, Any]] = {}  # user_id -> user data
+invites: Dict[str, Dict[str, Any]] = {}
+users: Dict[str, Dict[str, Any]] = {}
 
-# ============================================================================
-# Pydantic Models
-# ============================================================================
 
 class InviteRequest(BaseModel):
     email: EmailStr
@@ -124,724 +94,1179 @@ class WebhookPayload(BaseModel):
     meta: Dict[str, Any]
     data: Dict[str, Any]
 
-# ============================================================================
-# HTML Templates
-# ============================================================================
+
+# =============================================================================
+# DESIGN SYSTEM CONSTANTS
+# =============================================================================
+
+DESIGN_SYSTEM = {
+    "colors": {
+        "primary": "#1a1a1a",      # Near black - text
+        "accent": "#2d5a27",        # Forest green - cultural, grounded
+        "accent_light": "#4a8f42",  # Lighter green for hover
+        "background": "#fafafa",    # Warm white
+        "surface": "#ffffff",       # Pure white for cards
+        "muted": "#64748b",         # Slate gray for secondary text
+        "border": "#e2e8f0",        # Light border
+        "success": "#22c55e",
+        "error": "#ef4444",
+    },
+    "typography": {
+        "font_family": "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        "font_import": "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap",
+    },
+    "spacing": {
+        "xs": "0.25rem",
+        "sm": "0.5rem",
+        "md": "1rem",
+        "lg": "1.5rem",
+        "xl": "2rem",
+        "2xl": "3rem",
+        "3xl": "4rem",
+    },
+    "animation": {
+        "fast": "150ms",
+        "normal": "250ms",
+        "slow": "400ms",
+        "easing": "cubic-bezier(0.4, 0, 0.2, 1)",
+    }
+}
+
+
+# =============================================================================
+# CSS STYLES - Motion Primitives Inspired
+# =============================================================================
+
+def get_base_styles() -> str:
+    """Generate base CSS with design system tokens"""
+    return f'''
+    :root {{
+        --color-primary: {DESIGN_SYSTEM["colors"]["primary"]};
+        --color-accent: {DESIGN_SYSTEM["colors"]["accent"]};
+        --color-accent-light: {DESIGN_SYSTEM["colors"]["accent_light"]};
+        --color-background: {DESIGN_SYSTEM["colors"]["background"]};
+        --color-surface: {DESIGN_SYSTEM["colors"]["surface"]};
+        --color-muted: {DESIGN_SYSTEM["colors"]["muted"]};
+        --color-border: {DESIGN_SYSTEM["colors"]["border"]};
+        --font-family: {DESIGN_SYSTEM["typography"]["font_family"]};
+        --transition-fast: {DESIGN_SYSTEM["animation"]["fast"]};
+        --transition-normal: {DESIGN_SYSTEM["animation"]["normal"]};
+        --transition-slow: {DESIGN_SYSTEM["animation"]["slow"]};
+        --easing: {DESIGN_SYSTEM["animation"]["easing"]};
+    }}
+
+    * {{
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }}
+
+    html {{
+        font-size: 16px;
+        scroll-behavior: smooth;
+    }}
+
+    body {{
+        font-family: var(--font-family);
+        background: var(--color-background);
+        color: var(--color-primary);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }}
+
+    /* Focus states for accessibility */
+    :focus-visible {{
+        outline: 2px solid var(--color-accent);
+        outline-offset: 2px;
+    }}
+
+    /* Reduced motion support */
+    @media (prefers-reduced-motion: reduce) {{
+        *, *::before, *::after {{
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+        }}
+    }}
+
+    /* Typography Scale */
+    .text-display {{
+        font-size: clamp(3rem, 8vw, 5.5rem);
+        font-weight: 300;
+        line-height: 1.05;
+        letter-spacing: -0.03em;
+    }}
+
+    .text-headline {{
+        font-size: clamp(2rem, 5vw, 3rem);
+        font-weight: 400;
+        line-height: 1.15;
+        letter-spacing: -0.02em;
+    }}
+
+    .text-title {{
+        font-size: 1.5rem;
+        font-weight: 500;
+        line-height: 1.3;
+        letter-spacing: -0.01em;
+    }}
+
+    .text-body {{
+        font-size: 1.125rem;
+        font-weight: 400;
+        line-height: 1.6;
+    }}
+
+    .text-small {{
+        font-size: 0.875rem;
+        font-weight: 400;
+        line-height: 1.5;
+    }}
+
+    .text-caption {{
+        font-size: 0.75rem;
+        font-weight: 500;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+    }}
+
+    .text-muted {{
+        color: var(--color-muted);
+    }}
+
+    .text-accent {{
+        color: var(--color-accent);
+    }}
+
+    /* Layout Utilities */
+    .container {{
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 1.5rem;
+    }}
+
+    .container-narrow {{
+        max-width: 800px;
+    }}
+
+    /* Motion Primitives - Fade In Up */
+    @keyframes fadeInUp {{
+        from {{
+            opacity: 0;
+            transform: translateY(24px);
+        }}
+        to {{
+            opacity: 1;
+            transform: translateY(0);
+        }}
+    }}
+
+    .animate-fade-in-up {{
+        animation: fadeInUp 0.6s var(--easing) forwards;
+    }}
+
+    .animate-delay-1 {{ animation-delay: 0.1s; opacity: 0; }}
+    .animate-delay-2 {{ animation-delay: 0.2s; opacity: 0; }}
+    .animate-delay-3 {{ animation-delay: 0.3s; opacity: 0; }}
+    .animate-delay-4 {{ animation-delay: 0.4s; opacity: 0; }}
+
+    /* Motion Primitives - Blur In */
+    @keyframes blurIn {{
+        from {{
+            opacity: 0;
+            filter: blur(8px);
+        }}
+        to {{
+            opacity: 1;
+            filter: blur(0);
+        }}
+    }}
+
+    .animate-blur-in {{
+        animation: blurIn 0.8s var(--easing) forwards;
+    }}
+
+    /* Button Component - TweakCN Style */
+    .btn {{
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.875rem 1.75rem;
+        font-family: var(--font-family);
+        font-size: 0.875rem;
+        font-weight: 600;
+        letter-spacing: 0.025em;
+        text-decoration: none;
+        border: none;
+        border-radius: 0;
+        cursor: pointer;
+        transition: all var(--transition-normal) var(--easing);
+        position: relative;
+        overflow: hidden;
+    }}
+
+    .btn-primary {{
+        background: var(--color-primary);
+        color: var(--color-background);
+    }}
+
+    .btn-primary:hover {{
+        background: var(--color-accent);
+        transform: translateY(-2px);
+    }}
+
+    .btn-primary:active {{
+        transform: translateY(0);
+    }}
+
+    .btn-secondary {{
+        background: transparent;
+        color: var(--color-primary);
+        border: 1px solid var(--color-border);
+    }}
+
+    .btn-secondary:hover {{
+        border-color: var(--color-primary);
+        background: var(--color-primary);
+        color: var(--color-background);
+    }}
+
+    .btn-ghost {{
+        background: transparent;
+        color: var(--color-muted);
+        padding: 0.5rem 1rem;
+    }}
+
+    .btn-ghost:hover {{
+        color: var(--color-primary);
+    }}
+
+    /* Icon styling */
+    .btn svg {{
+        width: 16px;
+        height: 16px;
+        transition: transform var(--transition-fast) var(--easing);
+    }}
+
+    .btn:hover svg {{
+        transform: translateX(4px);
+    }}
+
+    /* Card Component */
+    .card {{
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        padding: 1.5rem;
+        transition: all var(--transition-normal) var(--easing);
+    }}
+
+    .card:hover {{
+        border-color: var(--color-muted);
+    }}
+
+    .card-interactive {{
+        cursor: pointer;
+    }}
+
+    .card-interactive:hover {{
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+    }}
+
+    /* Navigation */
+    .nav {{
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        padding: 1rem 0;
+        background: rgba(250, 250, 250, 0.8);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid transparent;
+        transition: all var(--transition-normal) var(--easing);
+    }}
+
+    .nav.scrolled {{
+        border-bottom-color: var(--color-border);
+    }}
+
+    .nav-inner {{
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }}
+
+    .nav-logo {{
+        font-size: 1.125rem;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        color: var(--color-primary);
+        text-decoration: none;
+    }}
+
+    .nav-links {{
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+    }}
+
+    .nav-link {{
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--color-muted);
+        text-decoration: none;
+        transition: color var(--transition-fast) var(--easing);
+    }}
+
+    .nav-link:hover {{
+        color: var(--color-primary);
+    }}
+
+    /* Hero Section - Full viewport, single focus */
+    .hero {{
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 6rem 0 4rem;
+        position: relative;
+    }}
+
+    .hero-content {{
+        max-width: 900px;
+    }}
+
+    .hero-badge {{
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.375rem 0.75rem;
+        background: rgba(45, 90, 39, 0.08);
+        color: var(--color-accent);
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        margin-bottom: 1.5rem;
+    }}
+
+    .hero-title {{
+        margin-bottom: 1.5rem;
+    }}
+
+    .hero-title strong {{
+        font-weight: 600;
+    }}
+
+    .hero-description {{
+        max-width: 600px;
+        margin-bottom: 2.5rem;
+    }}
+
+    .hero-cta {{
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }}
+
+    /* Features Section - Minimal, scannable */
+    .features {{
+        padding: 6rem 0;
+        border-top: 1px solid var(--color-border);
+    }}
+
+    .features-header {{
+        max-width: 600px;
+        margin-bottom: 4rem;
+    }}
+
+    .features-grid {{
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 2rem;
+    }}
+
+    .feature {{
+        padding: 1.5rem 0;
+    }}
+
+    .feature-icon {{
+        width: 40px;
+        height: 40px;
+        margin-bottom: 1rem;
+        color: var(--color-accent);
+    }}
+
+    .feature-title {{
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }}
+
+    .feature-description {{
+        font-size: 0.9375rem;
+        color: var(--color-muted);
+        line-height: 1.6;
+    }}
+
+    /* Social Proof Section */
+    .social-proof {{
+        padding: 4rem 0;
+        background: var(--color-surface);
+        border-top: 1px solid var(--color-border);
+        border-bottom: 1px solid var(--color-border);
+    }}
+
+    .social-proof-content {{
+        text-align: center;
+    }}
+
+    .social-proof-stat {{
+        font-size: 3rem;
+        font-weight: 300;
+        letter-spacing: -0.02em;
+        margin-bottom: 0.5rem;
+    }}
+
+    /* Positioning Section - The "Why Different" */
+    .positioning {{
+        padding: 6rem 0;
+    }}
+
+    .positioning-grid {{
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4rem;
+        align-items: start;
+    }}
+
+    .positioning-column {{
+        padding: 2rem;
+    }}
+
+    .positioning-column.them {{
+        background: #f1f5f9;
+        border: 1px solid var(--color-border);
+    }}
+
+    .positioning-column.us {{
+        background: rgba(45, 90, 39, 0.04);
+        border: 1px solid var(--color-accent);
+    }}
+
+    .positioning-label {{
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-bottom: 1rem;
+    }}
+
+    .positioning-column.them .positioning-label {{
+        color: var(--color-muted);
+    }}
+
+    .positioning-column.us .positioning-label {{
+        color: var(--color-accent);
+    }}
+
+    /* CTA Section */
+    .cta-section {{
+        padding: 6rem 0;
+        text-align: center;
+        border-top: 1px solid var(--color-border);
+    }}
+
+    .cta-content {{
+        max-width: 600px;
+        margin: 0 auto;
+    }}
+
+    /* Footer */
+    .footer {{
+        padding: 3rem 0;
+        border-top: 1px solid var(--color-border);
+    }}
+
+    .footer-inner {{
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }}
+
+    .footer-text {{
+        font-size: 0.875rem;
+        color: var(--color-muted);
+    }}
+
+    .footer-links {{
+        display: flex;
+        gap: 1.5rem;
+    }}
+
+    .footer-link {{
+        font-size: 0.875rem;
+        color: var(--color-muted);
+        text-decoration: none;
+        transition: color var(--transition-fast) var(--easing);
+    }}
+
+    .footer-link:hover {{
+        color: var(--color-primary);
+    }}
+
+    /* Responsive */
+    @media (max-width: 768px) {{
+        .nav-links {{
+            display: none;
+        }}
+
+        .hero {{
+            padding: 5rem 0 3rem;
+        }}
+
+        .positioning-grid {{
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }}
+
+        .footer-inner {{
+            flex-direction: column;
+            gap: 1.5rem;
+            text-align: center;
+        }}
+    }}
+
+    /* Invite Badge - Floating */
+    .invite-badge {{
+        position: fixed;
+        top: 50%;
+        right: -36px;
+        transform: rotate(-90deg) translateX(-50%);
+        background: var(--color-accent);
+        color: white;
+        padding: 0.5rem 1.25rem;
+        font-size: 0.625rem;
+        font-weight: 600;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        z-index: 50;
+    }}
+
+    @media (max-width: 768px) {{
+        .invite-badge {{
+            display: none;
+        }}
+    }}
+
+    /* Form Styles */
+    .form-group {{
+        margin-bottom: 1.5rem;
+    }}
+
+    .form-label {{
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }}
+
+    .form-input {{
+        width: 100%;
+        padding: 0.875rem 1rem;
+        font-family: var(--font-family);
+        font-size: 1rem;
+        border: 1px solid var(--color-border);
+        background: var(--color-surface);
+        transition: border-color var(--transition-fast) var(--easing);
+    }}
+
+    .form-input:focus {{
+        outline: none;
+        border-color: var(--color-accent);
+    }}
+
+    .form-input::placeholder {{
+        color: var(--color-muted);
+    }}
+    '''
+
+
+# =============================================================================
+# HERO PAGE - Landing
+# =============================================================================
 
 def get_hero_page() -> str:
-    """Generate the full-page hero landing page"""
-    return '''<!DOCTYPE html>
+    """Generate the full-page hero landing page with world-class design"""
+    return f'''<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AfroMations | AI Documentary Studio</title>
-    <meta name="description" content="AI-powered documentary and clipping studio for Seattle/Washington creators. Transform years of footage into compelling stories.">
-
+    <title>AfroMations | The AI Archive That Finds Your Story</title>
+    <meta name="description" content="Turn years of footage into searchable chapters. AI-powered footage intelligence for documentary creators, cultural archivists, and production teams.">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="{DESIGN_SYSTEM["typography"]["font_import"]}" rel="stylesheet">
+    
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        :root {
-            --color-bg: #fafafa;
-            --color-text: #1a1a1a;
-            --color-accent: #2d5a27;
-            --color-accent-light: #4a8f42;
-            --color-gray: #666;
-            --color-gray-light: #e5e5e5;
-            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        }
-
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
-        html, body {
-            height: 100%;
-            font-family: var(--font-main);
-            background: var(--color-bg);
-            color: var(--color-text);
-            overflow-x: hidden;
-        }
-
-        /* Hero Section - Full Page */
-        .hero {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-            padding: 2rem;
-            text-align: center;
-        }
-
-        /* Minimal Navigation */
-        .nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            padding: 1.5rem 3rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 100;
-            background: rgba(250, 250, 250, 0.9);
-            backdrop-filter: blur(10px);
-        }
-
-        .logo {
-            font-size: 1.25rem;
-            font-weight: 600;
-            letter-spacing: -0.02em;
-            color: var(--color-text);
-            text-decoration: none;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 2rem;
-            align-items: center;
-        }
-
-        .nav-links a {
-            color: var(--color-gray);
-            text-decoration: none;
-            font-size: 0.875rem;
-            font-weight: 500;
-            transition: color 0.2s;
-        }
-
-        .nav-links a:hover {
-            color: var(--color-text);
-        }
-
-        /* Hero Content */
-        .hero-content {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .hero-tagline {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.2em;
-            color: var(--color-accent);
-            margin-bottom: 1.5rem;
-            font-weight: 600;
-        }
-
-        .hero-title {
-            font-size: clamp(2.5rem, 8vw, 5rem);
-            font-weight: 300;
-            line-height: 1.1;
-            margin-bottom: 1.5rem;
-            letter-spacing: -0.03em;
-        }
-
-        .hero-title strong {
-            font-weight: 600;
-        }
-
-        .hero-description {
-            font-size: 1.125rem;
-            color: var(--color-gray);
-            line-height: 1.6;
-            max-width: 600px;
-            margin: 0 auto 3rem;
-        }
-
-        /* CTA Button */
-        .cta-button {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.75rem;
-            background: var(--color-text);
-            color: var(--color-bg);
-            padding: 1rem 2.5rem;
-            font-size: 0.875rem;
-            font-weight: 600;
-            text-decoration: none;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            transition: all 0.3s ease;
-            border: none;
-            cursor: pointer;
-        }
-
-        .cta-button:hover {
-            background: var(--color-accent);
-            transform: translateY(-2px);
-        }
-
-        .cta-button svg {
-            width: 16px;
-            height: 16px;
-            transition: transform 0.3s;
-        }
-
-        .cta-button:hover svg {
-            transform: translateX(4px);
-        }
-
-        /* Features Grid */
-        .features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 3rem;
-            max-width: 900px;
-            margin: 6rem auto 0;
-            padding-top: 3rem;
-            border-top: 1px solid var(--color-gray-light);
-        }
-
-        .feature {
-            text-align: left;
-        }
-
-        .feature-icon {
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-        }
-
-        .feature h3 {
-            font-size: 0.875rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            letter-spacing: -0.01em;
-        }
-
-        .feature p {
-            font-size: 0.8125rem;
-            color: var(--color-gray);
-            line-height: 1.5;
-        }
-
-        /* Footer */
-        .footer {
-            position: absolute;
-            bottom: 2rem;
-            left: 0;
-            right: 0;
-            text-align: center;
-            font-size: 0.75rem;
-            color: var(--color-gray);
-        }
-
-        .footer a {
-            color: var(--color-gray);
-            text-decoration: none;
-        }
-
-        .footer a:hover {
-            color: var(--color-text);
-        }
-
-        /* Invite Badge */
-        .invite-badge {
-            position: fixed;
-            top: 50%;
-            right: -40px;
-            transform: rotate(-90deg) translateX(-50%);
-            background: var(--color-accent);
-            color: white;
-            padding: 0.5rem 1.5rem;
-            font-size: 0.625rem;
-            text-transform: uppercase;
-            letter-spacing: 0.15em;
-            font-weight: 600;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .nav {
-                padding: 1rem 1.5rem;
-            }
-
-            .nav-links {
-                display: none;
-            }
-
-            .hero {
-                padding: 1rem;
-            }
-
-            .features {
-                gap: 2rem;
-                margin-top: 4rem;
-            }
-
-            .invite-badge {
-                display: none;
-            }
-        }
-
-        /* Animation */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .hero-content {
-            animation: fadeIn 0.8s ease-out;
-        }
-
-        .features {
-            animation: fadeIn 1s ease-out 0.3s both;
-        }
+        {get_base_styles()}
     </style>
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="nav">
-        <a href="/" class="logo">AfroMations</a>
-        <div class="nav-links">
-            <a href="#features">Features</a>
-            <a href="/pricing">Pricing</a>
-            <a href="/login">Sign In</a>
+    <!-- Navigation - Minimal, non-intrusive -->
+    <nav class="nav" id="nav">
+        <div class="container">
+            <div class="nav-inner">
+                <a href="/" class="nav-logo">AfroMations</a>
+                <div class="nav-links">
+                    <a href="#features" class="nav-link">Features</a>
+                    <a href="#positioning" class="nav-link">Why Us</a>
+                    <a href="/app" class="btn btn-primary">Request Access</a>
+                </div>
+            </div>
         </div>
     </nav>
 
     <!-- Invite Badge -->
     <div class="invite-badge">Seattle Creators</div>
 
-    <!-- Hero Section -->
+    <!-- Hero Section - Single dominant focal area -->
     <section class="hero">
-        <div class="hero-content">
-            <p class="hero-tagline">AI Documentary Studio</p>
-            <h1 class="hero-title">
-                Transform your <strong>footage</strong><br>into <strong>stories</strong>
-            </h1>
-            <p class="hero-description">
-                An AI-powered studio for Seattle and Washington creators.
-                Index years of footage, find the moments that matter,
-                and ship compelling content in hours, not weeks.
-            </p>
-            <a href="/app" class="cta-button">
-                Explore
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M5 12h14M12 5l7 7-7 7"/>
-                </svg>
-            </a>
-        </div>
-
-        <!-- Features -->
-        <div class="features" id="features">
-            <div class="feature">
-                <div class="feature-icon">🎬</div>
-                <h3>Smart Indexing</h3>
-                <p>Transcribe and search through years of footage in seconds.</p>
-            </div>
-            <div class="feature">
-                <div class="feature-icon">✂️</div>
-                <h3>AI Clipping</h3>
-                <p>Describe what you want. Get clips that match.</p>
-            </div>
-            <div class="feature">
-                <div class="feature-icon">🌍</div>
-                <h3>Multilingual</h3>
-                <p>Dual subtitles and dubbing for global reach.</p>
-            </div>
-            <div class="feature">
-                <div class="feature-icon">📈</div>
-                <h3>Viral Scoring</h3>
-                <p>AI-powered predictions for content performance.</p>
+        <div class="container">
+            <div class="hero-content">
+                <!-- Badge - Establishes context immediately -->
+                <div class="hero-badge animate-fade-in-up">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                    </svg>
+                    Footage Intelligence Platform
+                </div>
+                
+                <!-- Headline - The one thing they need to understand -->
+                <h1 class="text-display hero-title animate-fade-in-up animate-delay-1">
+                    Turn years of footage<br>into <strong>searchable chapters</strong>
+                </h1>
+                
+                <!-- Description - Clarifies the value -->
+                <p class="text-body text-muted hero-description animate-fade-in-up animate-delay-2">
+                    The AI archive that finds your story. Index everything you've ever shot, 
+                    search by concept or emotion, and ship compelling content in hours—not weeks.
+                </p>
+                
+                <!-- CTA - One primary action -->
+                <div class="hero-cta animate-fade-in-up animate-delay-3">
+                    <a href="/app" class="btn btn-primary">
+                        Explore
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                        </svg>
+                    </a>
+                    <a href="#features" class="btn btn-secondary">Learn More</a>
+                </div>
             </div>
         </div>
-
-        <!-- Footer -->
-        <footer class="footer">
-            <p>&copy; 2024 AfroMations. Built for creators in the I-5 corridor.</p>
-        </footer>
     </section>
 
+    <!-- Features Section - Scannable, minimal -->
+    <section class="features" id="features">
+        <div class="container">
+            <div class="features-header">
+                <p class="text-caption text-accent" style="margin-bottom: 1rem;">What We Solve</p>
+                <h2 class="text-headline">The footage graveyard problem</h2>
+                <p class="text-body text-muted" style="margin-top: 1rem;">
+                    Documentary creators have terabytes of footage they can't search. 
+                    It sits on hard drives, unsearchable, unusable. We fix that.
+                </p>
+            </div>
+            
+            <div class="features-grid">
+                <!-- Feature 1 -->
+                <div class="feature">
+                    <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="11" cy="11" r="8"/>
+                        <path d="M21 21l-4.35-4.35"/>
+                    </svg>
+                    <h3 class="feature-title">Search Everything</h3>
+                    <p class="feature-description">
+                        "Find every moment someone mentions gentrification" across 5 years of footage. 
+                        Search by concept, emotion, or spoken word.
+                    </p>
+                </div>
+                
+                <!-- Feature 2 -->
+                <div class="feature">
+                    <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <path d="M3 9h18M9 21V9"/>
+                    </svg>
+                    <h3 class="feature-title">AI Pre-Screening</h3>
+                    <p class="feature-description">
+                        Professional editors spend 60-80% of time in review. 
+                        Our AI surfaces relevant moments, turning weeks into hours.
+                    </p>
+                </div>
+                
+                <!-- Feature 3 -->
+                <div class="feature">
+                    <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M12 2a10 10 0 1 0 10 10"/>
+                        <path d="M12 12l4-4"/>
+                        <path d="M16 4v4h4"/>
+                    </svg>
+                    <h3 class="feature-title">Multilingual Pipeline</h3>
+                    <p class="feature-description">
+                        Dual subtitles and AI dubbing in one workflow. 
+                        Reach global audiences without vendor wrangling.
+                    </p>
+                </div>
+                
+                <!-- Feature 4 -->
+                <div class="feature">
+                    <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                    </svg>
+                    <h3 class="feature-title">Viral Scoring</h3>
+                    <p class="feature-description">
+                        Know what will perform before you publish. 
+                        AI-powered predictions and A/B testing for thumbnails and titles.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Positioning Section - Why we're different -->
+    <section class="positioning" id="positioning">
+        <div class="container">
+            <div class="features-header" style="margin-bottom: 3rem;">
+                <p class="text-caption text-accent" style="margin-bottom: 1rem;">The Difference</p>
+                <h2 class="text-headline">We're not a video editor</h2>
+            </div>
+            
+            <div class="positioning-grid">
+                <div class="positioning-column them">
+                    <p class="positioning-label">Video Editors (CapCut, etc.)</p>
+                    <p class="text-title" style="margin-bottom: 1rem;">"I have a clip, make it pretty"</p>
+                    <ul style="list-style: none; color: var(--color-muted);">
+                        <li style="margin-bottom: 0.5rem;">• Template-driven editing</li>
+                        <li style="margin-bottom: 0.5rem;">• Assumes you know what clip you want</li>
+                        <li style="margin-bottom: 0.5rem;">• Consumer/influencer focused</li>
+                        <li style="margin-bottom: 0.5rem;">• Quick social media clips</li>
+                    </ul>
+                </div>
+                
+                <div class="positioning-column us">
+                    <p class="positioning-label">AfroMations</p>
+                    <p class="text-title" style="margin-bottom: 1rem;">"I have 500 hours, find me the story"</p>
+                    <ul style="list-style: none; color: var(--color-primary);">
+                        <li style="margin-bottom: 0.5rem;">• AI-powered footage discovery</li>
+                        <li style="margin-bottom: 0.5rem;">• Searches your entire archive</li>
+                        <li style="margin-bottom: 0.5rem;">• Production teams & archivists</li>
+                        <li style="margin-bottom: 0.5rem;">• Documentary-grade storytelling</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Social Proof -->
+    <section class="social-proof">
+        <div class="container">
+            <div class="social-proof-content">
+                <p class="text-caption text-muted" style="margin-bottom: 1rem;">Built For</p>
+                <p class="social-proof-stat">Seattle & I-5 Corridor Creators</p>
+                <p class="text-body text-muted">
+                    Documentary filmmakers, cultural archivists, and production teams 
+                    who have too much footage and not enough time.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <div class="cta-content">
+                <p class="text-caption text-accent" style="margin-bottom: 1rem;">Limited Access</p>
+                <h2 class="text-headline" style="margin-bottom: 1rem;">Ready to find your story?</h2>
+                <p class="text-body text-muted" style="margin-bottom: 2rem;">
+                    We're opening access in limited waves to Seattle-area creators. 
+                    Request an invite to join the first cohort.
+                </p>
+                <a href="/app" class="btn btn-primary">
+                    Request Access
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-inner">
+                <p class="footer-text">© 2024 AfroMations. Built for creators in the I-5 corridor.</p>
+                <div class="footer-links">
+                    <a href="/pricing" class="footer-link">Pricing</a>
+                    <a href="https://github.com/executiveusa/AFRO-CLIPZ" class="footer-link">GitHub</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
     <script>
+        // Minimal JS - Navigation scroll effect
+        const nav = document.getElementById('nav');
+        window.addEventListener('scroll', () => {{
+            if (window.scrollY > 50) {{
+                nav.classList.add('scrolled');
+            }} else {{
+                nav.classList.remove('scrolled');
+            }}
+        }});
+
         // Smooth scroll for anchor links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {{
+            anchor.addEventListener('click', function (e) {{
                 e.preventDefault();
-                document.querySelector(this.getAttribute('href')).scrollIntoView({
-                    behavior: 'smooth'
-                });
-            });
-        });
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {{
+                    target.scrollIntoView({{ behavior: 'smooth', block: 'start' }});
+                }}
+            }});
+        }});
     </script>
 </body>
 </html>'''
 
+
+# =============================================================================
+# APP DASHBOARD - Clean, minimal, one action per view
+# =============================================================================
+
 def get_app_dashboard() -> str:
-    """Generate the app dashboard page"""
-    return '''<!DOCTYPE html>
+    """Generate the app dashboard with world-class design"""
+    return f'''<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | AfroMations</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="{DESIGN_SYSTEM["typography"]["font_import"]}" rel="stylesheet">
+    
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root {
-            --color-bg: #fafafa;
-            --color-text: #1a1a1a;
-            --color-accent: #2d5a27;
-            --color-gray: #666;
-            --color-gray-light: #e5e5e5;
-            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-        }
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
-        body {
-            font-family: var(--font-main);
-            background: var(--color-bg);
-            color: var(--color-text);
+        {get_base_styles()}
+        
+        /* Dashboard-specific styles */
+        .dashboard {{
             min-height: 100vh;
-        }
-        .dashboard {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 4rem 2rem;
-        }
-        .dashboard-header {
+            padding-top: 5rem;
+        }}
+        
+        .dashboard-header {{
+            padding: 3rem 0;
+            border-bottom: 1px solid var(--color-border);
+        }}
+        
+        .dashboard-header-inner {{
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 3rem;
-        }
-        .dashboard-header h1 {
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
-        .btn {
-            background: var(--color-text);
-            color: var(--color-bg);
-            padding: 0.75rem 1.5rem;
-            font-size: 0.875rem;
-            font-weight: 500;
-            text-decoration: none;
-            border: none;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .btn:hover { background: var(--color-accent); }
-        .projects-grid {
+        }}
+        
+        .dashboard-content {{
+            padding: 3rem 0;
+        }}
+        
+        /* Empty State - The hero of the dashboard */
+        .empty-state {{
+            text-align: center;
+            padding: 6rem 2rem;
+            max-width: 500px;
+            margin: 0 auto;
+        }}
+        
+        .empty-state-icon {{
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 1.5rem;
+            color: var(--color-muted);
+            opacity: 0.5;
+        }}
+        
+        /* Project Grid */
+        .projects-grid {{
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
             gap: 1.5rem;
-        }
-        .project-card {
-            background: white;
-            border: 1px solid var(--color-gray-light);
+        }}
+        
+        .project-card {{
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
             padding: 1.5rem;
-            transition: box-shadow 0.2s;
-        }
-        .project-card:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        }
-        .project-card h3 {
-            font-size: 1rem;
-            margin-bottom: 0.5rem;
-        }
-        .project-card p {
-            font-size: 0.875rem;
-            color: var(--color-gray);
-        }
-        .empty-state {
-            text-align: center;
-            padding: 4rem 2rem;
-            background: white;
-            border: 2px dashed var(--color-gray-light);
-        }
-        .empty-state h2 {
-            font-size: 1.25rem;
-            margin-bottom: 0.5rem;
-        }
-        .empty-state p {
-            color: var(--color-gray);
-            margin-bottom: 1.5rem;
-        }
-        .back-link {
-            display: inline-block;
-            margin-bottom: 2rem;
-            color: var(--color-gray);
-            text-decoration: none;
-            font-size: 0.875rem;
-        }
-        .back-link:hover { color: var(--color-text); }
-    </style>
-</head>
-<body>
-    <div class="dashboard">
-        <a href="/" class="back-link">&larr; Back to home</a>
-        <div class="dashboard-header">
-            <h1>Your Projects</h1>
-            <button class="btn" onclick="createProject()">New Project</button>
-        </div>
-
-        <div class="empty-state">
-            <h2>No projects yet</h2>
-            <p>Create your first project to start transforming your footage.</p>
-            <button class="btn" onclick="createProject()">Create Project</button>
-        </div>
-    </div>
-
-    <script>
-        function createProject() {
-            window.location.href = '/app/new';
-        }
-    </script>
-</body>
-</html>'''
-
-def get_login_page() -> str:
-    """Generate the login page"""
-    return '''<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign In | AfroMations</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root {
-            --color-bg: #fafafa;
-            --color-text: #1a1a1a;
-            --color-accent: #2d5a27;
-            --color-gray: #666;
-            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-        }
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
-        body {
-            font-family: var(--font-main);
-            background: var(--color-bg);
-            color: var(--color-text);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .login-container {
-            width: 100%;
-            max-width: 400px;
-            padding: 2rem;
-        }
-        .login-header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-        .login-header h1 {
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-        .login-header p {
-            color: var(--color-gray);
-            font-size: 0.875rem;
-        }
-        .login-form {
-            background: white;
-            padding: 2rem;
-            border: 1px solid #e5e5e5;
-        }
-        .form-group {
-            margin-bottom: 1rem;
-        }
-        .form-group label {
-            display: block;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 0.5rem;
-        }
-        .form-group input {
-            width: 100%;
-            padding: 0.75rem;
-            font-size: 1rem;
-            border: 1px solid #e5e5e5;
-            font-family: inherit;
-        }
-        .form-group input:focus {
-            outline: none;
+            cursor: pointer;
+            transition: all var(--transition-normal) var(--easing);
+        }}
+        
+        .project-card:hover {{
             border-color: var(--color-accent);
-        }
-        .btn {
-            width: 100%;
-            background: var(--color-text);
-            color: var(--color-bg);
-            padding: 0.875rem;
-            font-size: 0.875rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            border: none;
-            cursor: pointer;
-            margin-top: 1rem;
-        }
-        .btn:hover { background: var(--color-accent); }
-        .divider {
-            text-align: center;
-            margin: 1.5rem 0;
-            color: var(--color-gray);
-            font-size: 0.75rem;
-        }
-        .google-btn {
-            width: 100%;
-            background: white;
-            color: var(--color-text);
-            padding: 0.875rem;
-            font-size: 0.875rem;
-            font-weight: 500;
-            border: 1px solid #e5e5e5;
-            cursor: pointer;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+        }}
+        
+        .project-card-header {{
             display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.75rem;
-        }
-        .google-btn:hover { background: #f5f5f5; }
-        .back-link {
-            display: block;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }}
+        
+        .project-card-title {{
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }}
+        
+        .project-card-meta {{
+            font-size: 0.875rem;
+            color: var(--color-muted);
+        }}
+        
+        .project-card-stats {{
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--color-border);
+        }}
+        
+        .project-stat {{
+            font-size: 0.875rem;
+        }}
+        
+        .project-stat-value {{
+            font-weight: 600;
+            color: var(--color-primary);
+        }}
+        
+        .project-stat-label {{
+            color: var(--color-muted);
+        }}
+        
+        /* Upload Zone */
+        .upload-zone {{
+            border: 2px dashed var(--color-border);
+            padding: 3rem;
             text-align: center;
-            margin-top: 1.5rem;
-            color: var(--color-gray);
-            text-decoration: none;
-            font-size: 0.875rem;
-        }
-        .invite-notice {
-            background: #f0f7ef;
-            border: 1px solid #d4e5d1;
-            padding: 1rem;
-            margin-bottom: 1.5rem;
-            font-size: 0.875rem;
-            color: var(--color-accent);
-        }
+            cursor: pointer;
+            transition: all var(--transition-normal) var(--easing);
+        }}
+        
+        .upload-zone:hover {{
+            border-color: var(--color-accent);
+            background: rgba(45, 90, 39, 0.02);
+        }}
+        
+        .upload-zone-icon {{
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 1rem;
+            color: var(--color-muted);
+        }}
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <div class="login-header">
-            <h1>Welcome back</h1>
-            <p>Sign in to continue to AfroMations</p>
-        </div>
-
-        <div class="login-form">
-            <div class="invite-notice">
-                AfroMations is currently invite-only. Request access to join the Seattle Creator Cohort.
+    <!-- Navigation -->
+    <nav class="nav scrolled">
+        <div class="container">
+            <div class="nav-inner">
+                <a href="/" class="nav-logo">AfroMations</a>
+                <div class="nav-links">
+                    <a href="/app" class="nav-link" style="color: var(--color-primary);">Projects</a>
+                    <a href="/app/library" class="nav-link">Library</a>
+                    <a href="/app/settings" class="nav-link">Settings</a>
+                </div>
             </div>
-
-            <button class="google-btn" onclick="signInWithGoogle()">
-                <svg width="18" height="18" viewBox="0 0 24 24">
-                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                </svg>
-                Continue with Google
-            </button>
-
-            <div class="divider">or</div>
-
-            <form onsubmit="signInWithEmail(event)">
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" name="email" required placeholder="you@example.com">
-                </div>
-                <div class="form-group">
-                    <label>Invite Code</label>
-                    <input type="text" name="invite_code" placeholder="Enter your invite code">
-                </div>
-                <button type="submit" class="btn">Continue</button>
-            </form>
         </div>
+    </nav>
 
-        <a href="/" class="back-link">&larr; Back to home</a>
+    <main class="dashboard">
+        <div class="container">
+            <!-- Dashboard Header -->
+            <div class="dashboard-header">
+                <div class="dashboard-header-inner">
+                    <div>
+                        <h1 class="text-headline">Projects</h1>
+                        <p class="text-body text-muted">Your footage archives and clip projects</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="showNewProject()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 5v14M5 12h14"/>
+                        </svg>
+                        New Project
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Dashboard Content -->
+            <div class="dashboard-content">
+                <!-- Empty State (shown when no projects) -->
+                <div class="empty-state" id="emptyState">
+                    <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <path d="M3 9h18"/>
+                        <path d="M9 21V9"/>
+                    </svg>
+                    <h2 class="text-title" style="margin-bottom: 0.5rem;">No projects yet</h2>
+                    <p class="text-body text-muted" style="margin-bottom: 1.5rem;">
+                        Create your first project to start indexing footage and finding stories.
+                    </p>
+                    <button class="btn btn-primary" onclick="showNewProject()">
+                        Create First Project
+                    </button>
+                </div>
+                
+                <!-- Projects Grid (hidden when empty) -->
+                <div class="projects-grid" id="projectsGrid" style="display: none;">
+                    <!-- Sample Project Card -->
+                    <div class="project-card card-interactive">
+                        <div class="project-card-header">
+                            <div>
+                                <h3 class="project-card-title">Seattle Documentary 2024</h3>
+                                <p class="project-card-meta">Updated 2 hours ago</p>
+                            </div>
+                            <span class="text-caption" style="color: var(--color-accent);">Active</span>
+                        </div>
+                        <div class="project-card-stats">
+                            <div class="project-stat">
+                                <span class="project-stat-value">47</span>
+                                <span class="project-stat-label"> hours indexed</span>
+                            </div>
+                            <div class="project-stat">
+                                <span class="project-stat-value">12</span>
+                                <span class="project-stat-label"> clips found</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- New Project Modal (hidden by default) -->
+    <div id="newProjectModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: center; justify-content: center;">
+        <div style="background: var(--color-surface); padding: 2rem; max-width: 500px; width: 90%; margin: 2rem;">
+            <h2 class="text-title" style="margin-bottom: 1.5rem;">New Project</h2>
+            
+            <div class="form-group">
+                <label class="form-label" for="projectName">Project Name</label>
+                <input type="text" id="projectName" class="form-input" placeholder="e.g., Seattle Documentary 2024">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Upload Footage</label>
+                <div class="upload-zone">
+                    <svg class="upload-zone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    <p class="text-body">Drop video files here or click to browse</p>
+                    <p class="text-small text-muted">MP4, MOV, AVI up to 10GB</p>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+                <button class="btn btn-secondary" onclick="hideNewProject()">Cancel</button>
+                <button class="btn btn-primary">Create Project</button>
+            </div>
+        </div>
     </div>
 
     <script>
-        function signInWithGoogle() {
-            window.location.href = '/auth/google';
-        }
-
-        function signInWithEmail(e) {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            window.location.href = '/auth/email?email=' + encodeURIComponent(formData.get('email')) + '&code=' + encodeURIComponent(formData.get('invite_code'));
-        }
+        function showNewProject() {{
+            document.getElementById('newProjectModal').style.display = 'flex';
+        }}
+        
+        function hideNewProject() {{
+            document.getElementById('newProjectModal').style.display = 'none';
+        }}
+        
+        // Close modal on backdrop click
+        document.getElementById('newProjectModal').addEventListener('click', function(e) {{
+            if (e.target === this) hideNewProject();
+        }});
     </script>
 </body>
 </html>'''
+
+
+# =============================================================================
+# PRICING PAGE
+# =============================================================================
 
 def get_pricing_page() -> str:
     """Generate the pricing page"""
-    return '''<!DOCTYPE html>
+    return f'''<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pricing | AfroMations</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="{DESIGN_SYSTEM["typography"]["font_import"]}" rel="stylesheet">
+    
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root {
-            --color-bg: #fafafa;
-            --color-text: #1a1a1a;
-            --color-accent: #2d5a27;
-            --color-gray: #666;
-            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-        }
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
-        body {
-            font-family: var(--font-main);
-            background: var(--color-bg);
-            color: var(--color-text);
-            min-height: 100vh;
-        }
-        .nav {
-            padding: 1.5rem 3rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #e5e5e5;
-        }
-        .logo {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--color-text);
-            text-decoration: none;
-        }
-        .pricing-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 4rem 2rem;
-        }
-        .pricing-header {
+        {get_base_styles()}
+        
+        .pricing {{
+            padding: 8rem 0 4rem;
+        }}
+        
+        .pricing-header {{
             text-align: center;
-            margin-bottom: 4rem;
-        }
-        .pricing-header h1 {
-            font-size: 2.5rem;
-            font-weight: 300;
-            margin-bottom: 1rem;
-        }
-        .pricing-header p {
-            color: var(--color-gray);
-            font-size: 1.125rem;
-        }
-        .pricing-grid {
+            max-width: 600px;
+            margin: 0 auto 4rem;
+        }}
+        
+        .pricing-grid {{
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 2rem;
-        }
-        .pricing-card {
-            background: white;
-            border: 1px solid #e5e5e5;
-            padding: 2.5rem;
-            position: relative;
-        }
-        .pricing-card.featured {
+            max-width: 1000px;
+            margin: 0 auto;
+        }}
+        
+        .pricing-card {{
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+        }}
+        
+        .pricing-card.featured {{
             border-color: var(--color-accent);
-            box-shadow: 0 4px 20px rgba(45, 90, 39, 0.1);
-        }
-        .pricing-card.featured::before {
+            position: relative;
+        }}
+        
+        .pricing-card.featured::before {{
             content: 'Most Popular';
             position: absolute;
             top: -12px;
@@ -849,363 +1274,359 @@ def get_pricing_page() -> str:
             transform: translateX(-50%);
             background: var(--color-accent);
             color: white;
-            padding: 0.25rem 1rem;
+            padding: 0.25rem 0.75rem;
             font-size: 0.75rem;
             font-weight: 600;
+            letter-spacing: 0.05em;
             text-transform: uppercase;
-        }
-        .plan-name {
+        }}
+        
+        .pricing-card-header {{
+            margin-bottom: 1.5rem;
+        }}
+        
+        .pricing-card-name {{
             font-size: 1.25rem;
             font-weight: 600;
             margin-bottom: 0.5rem;
-        }
-        .plan-desc {
-            color: var(--color-gray);
-            font-size: 0.875rem;
+        }}
+        
+        .pricing-card-description {{
+            font-size: 0.9375rem;
+            color: var(--color-muted);
+        }}
+        
+        .pricing-card-price {{
             margin-bottom: 1.5rem;
-        }
-        .plan-price {
+        }}
+        
+        .pricing-amount {{
             font-size: 3rem;
             font-weight: 300;
-            margin-bottom: 0.5rem;
-        }
-        .plan-price span {
-            font-size: 1rem;
-            color: var(--color-gray);
-        }
-        .plan-period {
-            color: var(--color-gray);
+            letter-spacing: -0.02em;
+        }}
+        
+        .pricing-period {{
             font-size: 0.875rem;
-            margin-bottom: 2rem;
-        }
-        .plan-features {
+            color: var(--color-muted);
+        }}
+        
+        .pricing-features {{
             list-style: none;
             margin-bottom: 2rem;
-        }
-        .plan-features li {
+            flex-grow: 1;
+        }}
+        
+        .pricing-features li {{
             padding: 0.5rem 0;
-            font-size: 0.875rem;
+            font-size: 0.9375rem;
             display: flex;
             align-items: center;
             gap: 0.75rem;
-        }
-        .plan-features li::before {
-            content: '✓';
+        }}
+        
+        .pricing-features li svg {{
+            width: 16px;
+            height: 16px;
             color: var(--color-accent);
-            font-weight: bold;
-        }
-        .btn {
-            width: 100%;
-            background: var(--color-text);
-            color: var(--color-bg);
-            padding: 1rem;
-            font-size: 0.875rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            border: none;
-            cursor: pointer;
-            text-align: center;
-            text-decoration: none;
-            display: block;
-        }
-        .btn:hover { background: var(--color-accent); }
-        .btn-outline {
-            background: transparent;
-            color: var(--color-text);
-            border: 1px solid var(--color-text);
-        }
-        .btn-outline:hover {
-            background: var(--color-text);
-            color: var(--color-bg);
-        }
-        .notice {
+            flex-shrink: 0;
+        }}
+        
+        .pricing-note {{
             text-align: center;
             margin-top: 3rem;
-            padding: 1.5rem;
-            background: #f5f5f5;
-            font-size: 0.875rem;
-            color: var(--color-gray);
-        }
+            padding-top: 2rem;
+            border-top: 1px solid var(--color-border);
+        }}
     </style>
 </head>
 <body>
-    <nav class="nav">
-        <a href="/" class="logo">AfroMations</a>
+    <!-- Navigation -->
+    <nav class="nav" id="nav">
+        <div class="container">
+            <div class="nav-inner">
+                <a href="/" class="nav-logo">AfroMations</a>
+                <div class="nav-links">
+                    <a href="/#features" class="nav-link">Features</a>
+                    <a href="/pricing" class="nav-link" style="color: var(--color-primary);">Pricing</a>
+                    <a href="/app" class="btn btn-primary">Request Access</a>
+                </div>
+            </div>
+        </div>
     </nav>
 
-    <div class="pricing-container">
-        <div class="pricing-header">
-            <h1>Simple, outcome-based pricing</h1>
-            <p>Annual and 2-year plans only. We sell results, not seats.</p>
-        </div>
-
-        <div class="pricing-grid">
-            <!-- Creator Pro -->
-            <div class="pricing-card">
-                <h2 class="plan-name">Creator Pro</h2>
-                <p class="plan-desc">For solo creators and small teams</p>
-                <div class="plan-price">$2,400<span>/year</span></div>
-                <p class="plan-period">$200/mo effective &bull; 2-year: $4,200</p>
-                <ul class="plan-features">
-                    <li>3 team seats</li>
-                    <li>10 projects</li>
-                    <li>600 minutes/month processing</li>
-                    <li>AI transcription & clipping</li>
-                    <li>2-language subtitles</li>
-                    <li>YouTube integration</li>
-                </ul>
-                <a href="/checkout/creator_pro" class="btn btn-outline">Get Started</a>
+    <main class="pricing">
+        <div class="container">
+            <div class="pricing-header">
+                <p class="text-caption text-accent" style="margin-bottom: 1rem;">Pricing</p>
+                <h1 class="text-headline" style="margin-bottom: 1rem;">Outcomes, not features</h1>
+                <p class="text-body text-muted">
+                    Annual plans only. We're building for serious creators who want results, 
+                    not another monthly subscription to forget about.
+                </p>
             </div>
-
-            <!-- Studio -->
-            <div class="pricing-card featured">
-                <h2 class="plan-name">Studio</h2>
-                <p class="plan-desc">For production teams and agencies</p>
-                <div class="plan-price">$9,600<span>/year</span></div>
-                <p class="plan-period">$800/mo effective &bull; 2-year: $16,800</p>
-                <ul class="plan-features">
-                    <li>10 team seats</li>
-                    <li>50 projects</li>
-                    <li>3,000 minutes/month processing</li>
-                    <li>Multi-source ingest (Drive, OneDrive)</li>
-                    <li>4-language subtitles + 2 dubbed</li>
-                    <li>Viral scoring & recommendations</li>
-                    <li>Basic white-label</li>
-                    <li>Priority processing</li>
-                </ul>
-                <a href="/checkout/studio" class="btn">Get Started</a>
+            
+            <div class="pricing-grid">
+                <!-- Creator Pro -->
+                <div class="pricing-card">
+                    <div class="pricing-card-header">
+                        <h2 class="pricing-card-name">Creator Pro</h2>
+                        <p class="pricing-card-description">Your AI assistant editor + localization studio</p>
+                    </div>
+                    <div class="pricing-card-price">
+                        <span class="pricing-amount">$200</span>
+                        <span class="pricing-period">/month, billed annually</span>
+                    </div>
+                    <ul class="pricing-features">
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            600 minutes of video/month
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            AI transcription & search
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            Smart clipping
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            Dual subtitles (2 languages)
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            3 team seats
+                        </li>
+                    </ul>
+                    <a href="/app" class="btn btn-secondary" style="width: 100%;">Request Access</a>
+                </div>
+                
+                <!-- Studio -->
+                <div class="pricing-card featured">
+                    <div class="pricing-card-header">
+                        <h2 class="pricing-card-name">Studio</h2>
+                        <p class="pricing-card-description">Pixar-style departments in a box</p>
+                    </div>
+                    <div class="pricing-card-price">
+                        <span class="pricing-amount">$800</span>
+                        <span class="pricing-period">/month, billed annually</span>
+                    </div>
+                    <ul class="pricing-features">
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            3,000 minutes of video/month
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            Everything in Creator Pro
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            AI dubbing (2 languages)
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            Viral scoring & ranking
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            YouTube publishing
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            10 team seats
+                        </li>
+                    </ul>
+                    <a href="/app" class="btn btn-primary" style="width: 100%;">Request Access</a>
+                </div>
+                
+                <!-- Black Label -->
+                <div class="pricing-card">
+                    <div class="pricing-card-header">
+                        <h2 class="pricing-card-name">Black Label</h2>
+                        <p class="pricing-card-description">Autonomous studio ops + private deployment</p>
+                    </div>
+                    <div class="pricing-card-price">
+                        <span class="pricing-amount">Custom</span>
+                        <span class="pricing-period">starting at $3,000/month</span>
+                    </div>
+                    <ul class="pricing-features">
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            Unlimited video processing
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            Everything in Studio
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            Dedicated deployment
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            Custom AI agents
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            White-label option
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            SLA support
+                        </li>
+                    </ul>
+                    <a href="mailto:hello@afromations.com" class="btn btn-secondary" style="width: 100%;">Contact Us</a>
+                </div>
             </div>
-
-            <!-- Black Label -->
-            <div class="pricing-card">
-                <h2 class="plan-name">Black Label</h2>
-                <p class="plan-desc">For media companies and archives</p>
-                <div class="plan-price">$36,000<span>+/year</span></div>
-                <p class="plan-period">Custom &bull; Contact for 2-year pricing</p>
-                <ul class="plan-features">
-                    <li>Unlimited seats</li>
-                    <li>Unlimited projects</li>
-                    <li>Dedicated deployment</li>
-                    <li>Custom AI agents</li>
-                    <li>Full white-label</li>
-                    <li>SLA support</li>
-                    <li>Agent training loops</li>
-                </ul>
-                <a href="/contact" class="btn btn-outline">Contact Us</a>
+            
+            <div class="pricing-note">
+                <p class="text-body text-muted">
+                    All plans require an invite. We're opening access in limited waves to ensure quality.
+                </p>
             </div>
         </div>
+    </main>
 
-        <div class="notice">
-            AfroMations is invite-only. All plans require annual or 2-year commitment.<br>
-            No monthly plans. No discounts. Results-focused pricing.
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-inner">
+                <p class="footer-text">© 2024 AfroMations. Built for creators in the I-5 corridor.</p>
+                <div class="footer-links">
+                    <a href="/" class="footer-link">Home</a>
+                    <a href="https://github.com/executiveusa/AFRO-CLIPZ" class="footer-link">GitHub</a>
+                </div>
+            </div>
         </div>
-    </div>
+    </footer>
+
+    <script>
+        const nav = document.getElementById('nav');
+        window.addEventListener('scroll', () => {{
+            if (window.scrollY > 50) {{
+                nav.classList.add('scrolled');
+            }} else {{
+                nav.classList.remove('scrolled');
+            }}
+        }});
+    </script>
 </body>
 </html>'''
 
-# ============================================================================
-# Routes - Pages
-# ============================================================================
+
+# =============================================================================
+# API ROUTES
+# =============================================================================
 
 @app.get("/", response_class=HTMLResponse)
 async def home():
-    """Hero landing page"""
+    """Serve the hero landing page"""
     return get_hero_page()
 
 @app.get("/app", response_class=HTMLResponse)
 async def dashboard():
-    """App dashboard"""
+    """Serve the app dashboard"""
     return get_app_dashboard()
 
-@app.get("/login", response_class=HTMLResponse)
-async def login_page():
-    """Login page"""
-    return get_login_page()
-
 @app.get("/pricing", response_class=HTMLResponse)
-async def pricing_page():
-    """Pricing page"""
+async def pricing():
+    """Serve the pricing page"""
     return get_pricing_page()
-
-# ============================================================================
-# Routes - API
-# ============================================================================
 
 @app.get("/api/health")
 async def health_check():
     """Health check endpoint"""
     return {
         "status": "healthy",
-        "service": "afromations",
-        "version": "1.0.0",
         "timestamp": datetime.utcnow().isoformat(),
-        "config": {
-            "auth_configured": settings.is_configured('GOOGLE_CLIENT_ID'),
-            "billing_configured": settings.is_configured('LEMON_SQUEEZY_API_KEY'),
-            "db_configured": settings.is_configured('SUPABASE_URL'),
-            "ai_configured": settings.is_configured('GROQ_API_KEY'),
-        }
+        "version": "2.0.0",
+        "design_system": "motion-primitives-inspired"
     }
 
-@app.get("/api/config")
-async def get_public_config():
-    """Public configuration for frontend"""
+@app.post("/api/invite/request")
+async def request_invite(request: InviteRequest):
+    """Request an invite to the platform"""
+    invite_id = hashlib.sha256(f"{request.email}{datetime.utcnow().isoformat()}".encode()).hexdigest()[:12]
+    invites[invite_id] = {
+        "email": request.email,
+        "name": request.name,
+        "company": request.company,
+        "use_case": request.use_case,
+        "status": "pending",
+        "created_at": datetime.utcnow().isoformat()
+    }
     return {
-        "invite_only": settings.INVITE_ONLY,
-        "google_auth_enabled": bool(settings.GOOGLE_CLIENT_ID),
-        "features": {
-            "clipping": True,
-            "transcription": True,
-            "subtitles": True,
-            "dubbing": False,  # Phase 2
-            "viral_scoring": False,  # Phase 2
-        }
+        "success": True,
+        "message": "Invite request received. We'll be in touch soon.",
+        "request_id": invite_id
     }
-
-# ============================================================================
-# Routes - Auth (Placeholder - integrate with Supabase/Google OAuth)
-# ============================================================================
-
-@app.get("/auth/google")
-async def google_auth():
-    """Initiate Google OAuth flow"""
-    if not settings.GOOGLE_CLIENT_ID:
-        return JSONResponse(
-            status_code=501,
-            content={"error": "Google Auth not configured", "message": "Set GOOGLE_CLIENT_ID environment variable"}
-        )
-    # In production, redirect to Google OAuth
-    return RedirectResponse(url="/app")
-
-@app.get("/auth/email")
-async def email_auth(email: str, code: Optional[str] = None):
-    """Email authentication with invite code"""
-    if settings.INVITE_ONLY and not code:
-        return JSONResponse(
-            status_code=403,
-            content={"error": "Invite required", "message": "AfroMations is invite-only. Please provide an invite code."}
-        )
-    # In production, verify invite code and send magic link
-    return RedirectResponse(url="/app")
-
-# ============================================================================
-# Routes - Billing (Lemon Squeezy integration)
-# ============================================================================
-
-@app.get("/checkout/{plan_id}")
-async def create_checkout(plan_id: str):
-    """Create Lemon Squeezy checkout session"""
-    if not settings.LEMON_SQUEEZY_API_KEY:
-        return JSONResponse(
-            status_code=501,
-            content={"error": "Billing not configured", "message": "Set LEMON_SQUEEZY_API_KEY environment variable"}
-        )
-
-    # Plan mapping
-    plans = {
-        "creator_pro": {"variant_id": "123", "name": "Creator Pro"},
-        "studio": {"variant_id": "456", "name": "Studio"},
-        "black_label": {"variant_id": "789", "name": "Black Label"},
-    }
-
-    if plan_id not in plans:
-        raise HTTPException(status_code=404, detail="Plan not found")
-
-    # In production, create checkout via Lemon Squeezy API
-    return JSONResponse(content={
-        "message": "Checkout would be created here",
-        "plan": plans[plan_id],
-        "redirect_url": f"https://afromations.lemonsqueezy.com/checkout/{plan_id}"
-    })
-
-@app.post("/webhooks/lemon-squeezy")
-async def lemon_squeezy_webhook(request: Request):
-    """Handle Lemon Squeezy webhooks"""
-    # Verify webhook signature
-    signature = request.headers.get("X-Signature")
-    body = await request.body()
-
-    if settings.LEMON_SQUEEZY_WEBHOOK_SECRET:
-        expected_sig = hashlib.hmac(
-            settings.LEMON_SQUEEZY_WEBHOOK_SECRET.encode(),
-            body,
-            hashlib.sha256
-        ).hexdigest()
-        if signature != expected_sig:
-            raise HTTPException(status_code=401, detail="Invalid signature")
-
-    payload = await request.json()
-    event_name = payload.get("meta", {}).get("event_name")
-
-    # Handle different webhook events
-    if event_name == "subscription_created":
-        # Activate subscription
-        pass
-    elif event_name == "subscription_updated":
-        # Update subscription
-        pass
-    elif event_name == "subscription_cancelled":
-        # Handle cancellation
-        pass
-
-    return {"received": True}
-
-# ============================================================================
-# Routes - Clip API (integrates with existing clipper)
-# ============================================================================
 
 @app.post("/api/clip")
-async def create_clip(clip_request: ClipRequest, background_tasks: BackgroundTasks):
-    """Create a clip from video based on query"""
-    # This would integrate with the existing app_enhanced.py clipper
+async def create_clip(request: ClipRequest):
+    """Create a new clip job"""
     job_id = secrets.token_hex(8)
-
     return {
         "job_id": job_id,
         "status": "queued",
-        "message": "Clip job created",
-        "query": clip_request.query,
-        "estimated_time": "2-5 minutes",
-        "status_url": f"/api/jobs/{job_id}"
+        "query": request.query,
+        "message": "Clip job created. Processing will begin shortly."
     }
 
 @app.get("/api/jobs/{job_id}")
 async def get_job_status(job_id: str):
-    """Get job status"""
-    # In production, check job queue/database
+    """Get the status of a clip job"""
     return {
         "job_id": job_id,
         "status": "processing",
         "progress": 45,
-        "message": "Transcribing video..."
+        "message": "Analyzing footage..."
     }
 
-# ============================================================================
-# Static Files
-# ============================================================================
 
-# Mount assets directory if it exists
-assets_path = Path(__file__).parent / "assets"
-if assets_path.exists():
-    app.mount("/assets", StaticFiles(directory=str(assets_path)), name="assets")
-
-# ============================================================================
-# Main
-# ============================================================================
+# =============================================================================
+# MAIN
+# =============================================================================
 
 if __name__ == "__main__":
-    print("\n" + "="*60)
-    print("🎬 AfroMations - AI Documentary Studio")
-    print("="*60)
-    print(f"Server: http://{settings.HOST}:{settings.PORT}")
-    print(f"Debug: {settings.DEBUG}")
-    print(f"Invite Only: {settings.INVITE_ONLY}")
-    print("="*60 + "\n")
-
     uvicorn.run(
-        "web:app",
+        "web_redesign:app",
         host=settings.HOST,
         port=settings.PORT,
-        reload=settings.DEBUG,
+        reload=settings.DEBUG
     )
