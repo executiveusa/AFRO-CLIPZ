@@ -718,61 +718,312 @@ def get_hero_page() -> str:
     
     <style>
         {get_base_styles()}
+        
+        /* ============================================
+           FULL PAGE HERO - Sketch Style
+           ============================================ */
+        
+        .hero-fullpage {{
+            min-height: 100vh;
+            min-height: 100dvh; /* Dynamic viewport height for mobile */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            background: #fafafa;
+            overflow: hidden;
+            padding: 0;
+        }}
+        
+        /* Hero Background Image Container */
+        .hero-bg {{
+            position: absolute;
+            inset: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1;
+        }}
+        
+        .hero-bg img {{
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            object-position: center;
+            max-width: 1400px;
+        }}
+        
+        /* Hero Content Overlay */
+        .hero-overlay {{
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 100vh;
+            min-height: 100dvh;
+            width: 100%;
+            padding: 2rem 1.5rem;
+        }}
+        
+        /* Logo/Title at top */
+        .hero-logo {{
+            font-family: var(--font-family);
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            font-weight: 900;
+            letter-spacing: -0.03em;
+            color: var(--color-primary);
+            text-transform: uppercase;
+            margin-top: 2rem;
+            text-align: center;
+        }}
+        
+        /* Spacer to push content */
+        .hero-spacer {{
+            flex: 1;
+        }}
+        
+        /* CTA at bottom */
+        .hero-cta-bottom {{
+            margin-bottom: 3rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }}
+        
+        .hero-cta-bottom .btn {{
+            min-width: 200px;
+            justify-content: center;
+            font-size: 1rem;
+            padding: 1rem 2.5rem;
+            letter-spacing: 0.15em;
+        }}
+        
+        /* Copyright */
+        .hero-copyright {{
+            position: absolute;
+            bottom: 1rem;
+            right: 1.5rem;
+            font-size: 0.75rem;
+            color: var(--color-muted);
+            z-index: 20;
+        }}
+        
+        /* Navigation for hero page - transparent */
+        .nav-hero {{
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 1rem 0;
+            background: transparent;
+            transition: all var(--transition-normal) var(--easing);
+        }}
+        
+        .nav-hero.scrolled {{
+            background: rgba(250, 250, 250, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--color-border);
+        }}
+        
+        .nav-hero .nav-logo {{
+            opacity: 0;
+            transition: opacity var(--transition-normal) var(--easing);
+        }}
+        
+        .nav-hero.scrolled .nav-logo {{
+            opacity: 1;
+        }}
+        
+        /* Scroll indicator */
+        .scroll-indicator {{
+            position: absolute;
+            bottom: 5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--color-muted);
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            animation: bounce 2s infinite;
+            z-index: 20;
+        }}
+        
+        .scroll-indicator svg {{
+            width: 20px;
+            height: 20px;
+        }}
+        
+        @keyframes bounce {{
+            0%, 20%, 50%, 80%, 100% {{ transform: translateX(-50%) translateY(0); }}
+            40% {{ transform: translateX(-50%) translateY(-8px); }}
+            60% {{ transform: translateX(-50%) translateY(-4px); }}
+        }}
+        
+        /* ============================================
+           RESPONSIVE - Mobile First
+           ============================================ */
+        
+        /* Mobile (default) */
+        @media (max-width: 767px) {{
+            .hero-logo {{
+                font-size: 2rem;
+                margin-top: 4rem;
+            }}
+            
+            .hero-bg img {{
+                object-fit: cover;
+                object-position: center 30%;
+            }}
+            
+            .hero-cta-bottom {{
+                margin-bottom: 6rem;
+            }}
+            
+            .hero-cta-bottom .btn {{
+                min-width: 180px;
+                padding: 0.875rem 2rem;
+            }}
+            
+            .scroll-indicator {{
+                bottom: 2rem;
+            }}
+            
+            .hero-copyright {{
+                bottom: 0.5rem;
+                right: 1rem;
+                font-size: 0.625rem;
+            }}
+        }}
+        
+        /* Tablet */
+        @media (min-width: 768px) and (max-width: 1023px) {{
+            .hero-logo {{
+                font-size: 3.5rem;
+                margin-top: 3rem;
+            }}
+            
+            .hero-bg img {{
+                object-fit: contain;
+            }}
+            
+            .hero-cta-bottom {{
+                margin-bottom: 4rem;
+            }}
+        }}
+        
+        /* Desktop */
+        @media (min-width: 1024px) {{
+            .hero-logo {{
+                font-size: 4.5rem;
+                margin-top: 2rem;
+            }}
+            
+            .hero-cta-bottom {{
+                margin-bottom: 3rem;
+            }}
+            
+            .hero-cta-bottom .btn {{
+                min-width: 220px;
+                padding: 1.125rem 3rem;
+            }}
+        }}
+        
+        /* Large Desktop */
+        @media (min-width: 1440px) {{
+            .hero-logo {{
+                font-size: 5rem;
+            }}
+        }}
+        
+        /* Landscape mobile - adjust for shorter height */
+        @media (max-height: 600px) and (orientation: landscape) {{
+            .hero-logo {{
+                font-size: 1.75rem;
+                margin-top: 1rem;
+            }}
+            
+            .hero-cta-bottom {{
+                margin-bottom: 1rem;
+            }}
+            
+            .scroll-indicator {{
+                display: none;
+            }}
+        }}
     </style>
 </head>
 <body>
-    <!-- Navigation - Minimal, non-intrusive -->
-    <nav class="nav" id="nav">
+    <!-- Navigation - Transparent on hero -->
+    <nav class="nav nav-hero" id="nav">
         <div class="container">
             <div class="nav-inner">
                 <a href="/" class="nav-logo">AfroMations</a>
                 <div class="nav-links">
                     <a href="#features" class="nav-link">Features</a>
                     <a href="#positioning" class="nav-link">Why Us</a>
+                    <a href="/pricing" class="nav-link">Pricing</a>
                     <a href="/app" class="btn btn-primary">Request Access</a>
                 </div>
             </div>
         </div>
     </nav>
 
-    <!-- Invite Badge -->
-    <div class="invite-badge">Seattle Creators</div>
-
-    <!-- Hero Section - Single dominant focal area -->
-    <section class="hero">
-        <div class="container">
-            <div class="hero-content">
-                <!-- Badge - Establishes context immediately -->
-                <div class="hero-badge animate-fade-in-up">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-                    </svg>
-                    Footage Intelligence Platform
-                </div>
-                
-                <!-- Headline - The one thing they need to understand -->
-                <h1 class="text-display hero-title animate-fade-in-up animate-delay-1">
-                    Turn years of footage<br>into <strong>searchable chapters</strong>
-                </h1>
-                
-                <!-- Description - Clarifies the value -->
-                <p class="text-body text-muted hero-description animate-fade-in-up animate-delay-2">
-                    The AI archive that finds your story. Index everything you've ever shot, 
-                    search by concept or emotion, and ship compelling content in hours—not weeks.
+    <!-- FULL PAGE HERO - Sketch Style -->
+    <section class="hero-fullpage" id="hero">
+        <!-- Background Image -->
+        <div class="hero-bg">
+            <img 
+                src="/assets/hero/afromations-hero.png" 
+                alt="AfroMations - Seattle skyline with creative visionary"
+                loading="eager"
+                fetchpriority="high"
+                onerror="this.style.display='none'; document.getElementById('hero-fallback').style.display='flex';"
+            >
+            <!-- Fallback if image not found -->
+            <div id="hero-fallback" style="display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%; width: 100%; text-align: center; padding: 2rem;">
+                <h1 class="hero-logo" style="opacity: 1;">AFROMATIONS</h1>
+                <p style="color: var(--color-muted); margin-top: 1rem; max-width: 500px;">
+                    The AI archive that finds your story. Turn years of footage into searchable chapters.
                 </p>
-                
-                <!-- CTA - One primary action -->
-                <div class="hero-cta animate-fade-in-up animate-delay-3">
-                    <a href="/app" class="btn btn-primary">
-                        Explore
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M5 12h14M12 5l7 7-7 7"/>
-                        </svg>
-                    </a>
-                    <a href="#features" class="btn btn-secondary">Learn More</a>
-                </div>
             </div>
         </div>
+        
+        <!-- Content Overlay -->
+        <div class="hero-overlay">
+            <!-- Logo at top (hidden when image loads, shown in image) -->
+            <div class="hero-logo" id="hero-title" style="opacity: 0; pointer-events: none;">AFROMATIONS</div>
+            
+            <!-- Spacer -->
+            <div class="hero-spacer"></div>
+            
+            <!-- CTA at bottom -->
+            <div class="hero-cta-bottom animate-fade-in-up">
+                <a href="/app" class="btn btn-primary">
+                    EXPLORE
+                </a>
+            </div>
+        </div>
+        
+        <!-- Scroll indicator -->
+        <div class="scroll-indicator">
+            <span>Scroll</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 5v14M5 12l7 7 7-7"/>
+            </svg>
+        </div>
+        
+        <!-- Copyright -->
+        <div class="hero-copyright">© afromations.art 2025 ™</div>
     </section>
 
     <!-- Features Section - Scannable, minimal -->
@@ -1558,6 +1809,15 @@ def get_pricing_page() -> str:
 async def home():
     """Serve the hero landing page"""
     return get_hero_page()
+
+@app.get("/assets/{path:path}")
+async def serve_assets(path: str):
+    """Serve static assets"""
+    from pathlib import Path as FilePath
+    asset_path = FilePath(__file__).parent / "assets" / path
+    if asset_path.exists() and asset_path.is_file():
+        return FileResponse(asset_path)
+    raise HTTPException(status_code=404, detail="Asset not found")
 
 @app.get("/app", response_class=HTMLResponse)
 async def dashboard():
