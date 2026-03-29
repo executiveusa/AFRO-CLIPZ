@@ -18,12 +18,17 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, List
 from pathlib import Path
 
-from fastapi import FastAPI, Request, HTTPException, Depends, BackgroundTasks, Form, UploadFile, File
+from fastapi import FastAPI, Request, HTTPException, Depends, BackgroundTasks, Form, UploadFile, File, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
 import uvicorn
+
+import database as db
+import auth as auth_module
+import billing as billing_module
+import clipper as clipper_module
 
 
 class Settings:
@@ -62,17 +67,32 @@ app = FastAPI(
     redoc_url="/api/redoc" if settings.DEBUG else None,
 )
 
+_origins = os.environ.get("CORS_ORIGINS", "*").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-sessions: Dict[str, Dict[str, Any]] = {}
-invites: Dict[str, Dict[str, Any]] = {}
-users: Dict[str, Dict[str, Any]] = {}
+# Active WebSocket connections keyed by job_id
+_ws_connections: Dict[str, List[WebSocket]] = {}
+
+# Sentry (optional)
+_sentry_dsn = os.environ.get("SENTRY_DSN", "")
+if _sentry_dsn:
+    try:
+        import sentry_sdk
+        from sentry_sdk.integrations.fastapi import FastApiIntegration
+        sentry_sdk.init(dsn=_sentry_dsn, integrations=[FastApiIntegration()])
+    except ImportError:
+        pass
+
+
+@app.on_event("startup")
+async def startup():
+    await db.init_db()
 
 
 class InviteRequest(BaseModel):
@@ -1579,44 +1599,269 @@ async def health_check():
         "design_system": "motion-primitives-inspired"
     }
 
+# ─── Auth ─────────────────────────────────────────────────────────────────────
+
+@app.get("/auth/google")
+async def google_login():
+    try:
+        url = auth_module.get_google_auth_url()
+        return RedirectResponse(url)
+    except HTTPException as e:
+        return JSONResponse({"error": e.detail}, status_code=e.status_code)
+
+
+@app.get("/auth/google/callback")
+async def google_callback(code: str, state: str = None):
+    try:
+        user_info = await auth_module.exchange_google_code(code)
+        user = await db.upsert_google_user(
+            google_id=user_info["sub"],
+            email=user_info["email"],
+            name=user_info.get("name", ""),
+            avatar_url=user_info.get("picture", ""),
+        )
+        token = auth_module.create_access_token(user["id"], user["email"], user.get("plan", "free"))
+        resp = RedirectResponse("/app")
+        resp.set_cookie("access_token", token, httponly=True, samesite="lax", max_age=259200)
+        return resp
+    except Exception as exc:
+        return RedirectResponse(f"/?error={str(exc)[:80]}")
+
+
+@app.post("/auth/logout")
+async def logout():
+    resp = JSONResponse({"success": True})
+    resp.delete_cookie("access_token")
+    return resp
+
+
+@app.get("/api/me")
+async def get_me(request: Request):
+    user = await auth_module.get_current_user(request=request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    full = await db.get_user_by_id(user["sub"])
+    if not full:
+        raise HTTPException(status_code=404, detail="User not found")
+    full.pop("google_id", None)
+    return full
+
+
+# ─── Invite ───────────────────────────────────────────────────────────────────
+
 @app.post("/api/invite/request")
 async def request_invite(request: InviteRequest):
-    """Request an invite to the platform"""
-    invite_id = hashlib.sha256(f"{request.email}{datetime.utcnow().isoformat()}".encode()).hexdigest()[:12]
-    invites[invite_id] = {
-        "email": request.email,
-        "name": request.name,
-        "company": request.company,
-        "use_case": request.use_case,
-        "status": "pending",
-        "created_at": datetime.utcnow().isoformat()
-    }
+    record = await db.create_invite_request(
+        email=request.email,
+        name=request.name,
+        company=request.company,
+        use_case=request.use_case,
+    )
     return {
         "success": True,
         "message": "Invite request received. We'll be in touch soon.",
-        "request_id": invite_id
+        "request_id": record["id"],
     }
+
+
+# ─── Billing ──────────────────────────────────────────────────────────────────
+
+@app.get("/checkout/{plan_id}")
+async def checkout(plan_id: str, term: str = "annual", request: Request = None):
+    user = await auth_module.get_current_user(request=request)
+    if not user:
+        return RedirectResponse(f"/auth/google?next=/checkout/{plan_id}?term={term}")
+    full = await db.get_user_by_id(user["sub"])
+    result = await billing_module.create_checkout(
+        plan_id=plan_id,
+        term=term,
+        user_email=full["email"],
+        user_name=full.get("name", ""),
+        custom_data={"user_id": full["id"]},
+    )
+    if result.get("demo"):
+        return JSONResponse(result)
+    return RedirectResponse(result["url"])
+
+
+@app.post("/webhooks/lemon-squeezy")
+async def lemon_squeezy_webhook(request: Request):
+    body = await request.body()
+    sig = request.headers.get("X-Signature", "")
+    if not billing_module.verify_webhook(body, sig):
+        raise HTTPException(status_code=400, detail="Invalid signature")
+    try:
+        payload = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON")
+    event = billing_module.parse_webhook_event(payload)
+    if event["action"] in ("activate", "renew", "update"):
+        user = await db.get_user_by_email(event["user_email"])
+        if user:
+            await db.upsert_subscription(
+                user_id=user["id"],
+                plan=event["plan"],
+                ls_id=event["ls_id"],
+                ls_customer_id=event["ls_customer_id"],
+                period_end=event["period_end"],
+                status=event["status"],
+            )
+    elif event["action"] in ("cancel", "expire", "past_due"):
+        user = await db.get_user_by_email(event["user_email"])
+        if user:
+            await db.upsert_subscription(
+                user_id=user["id"],
+                plan=event["plan"],
+                ls_id=event["ls_id"],
+                ls_customer_id=event["ls_customer_id"],
+                period_end=event["period_end"],
+                status=event["action"],
+            )
+    return {"received": True}
+
+
+# ─── Video upload & clipping ──────────────────────────────────────────────────
+
+@app.post("/api/upload")
+async def upload_video(file: UploadFile = File(...), request: Request = None):
+    user = await auth_module.get_current_user(request=request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    contents = await file.read()
+    job_id = secrets.token_hex(8)
+    path = clipper_module.save_upload(contents, file.filename, job_id)
+    return {"job_id": job_id, "upload_path": path, "filename": file.filename}
+
 
 @app.post("/api/clip")
-async def create_clip(request: ClipRequest):
-    """Create a new clip job"""
-    job_id = secrets.token_hex(8)
-    return {
-        "job_id": job_id,
-        "status": "queued",
-        "query": request.query,
-        "message": "Clip job created. Processing will begin shortly."
-    }
+async def create_clip(clip_req: ClipRequest, request: Request = None):
+    user = await auth_module.get_current_user(request=request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    job = await db.create_job(
+        user_id=user["sub"],
+        query=clip_req.query,
+        job_type="clip",
+    )
+    job_id = job["id"]
+
+    async def on_progress(pct: int, msg: str):
+        await db.update_job(job_id, status="processing", progress=pct, message=msg)
+        for ws in _ws_connections.get(job_id, []):
+            try:
+                await ws.send_json({"job_id": job_id, "progress": pct, "message": msg})
+            except Exception:
+                pass
+
+    async def on_complete(result: dict):
+        await db.update_job(
+            job_id,
+            status="complete",
+            progress=100,
+            output_path=result.get("output_path"),
+            result_data=result,
+            message="Done!",
+        )
+        for ws in _ws_connections.get(job_id, []):
+            try:
+                await ws.send_json({"job_id": job_id, "status": "complete", "result": result})
+            except Exception:
+                pass
+
+    async def on_error(error: str):
+        await db.update_job(job_id, status="error", error=error, message=error)
+        for ws in _ws_connections.get(job_id, []):
+            try:
+                await ws.send_json({"job_id": job_id, "status": "error", "error": error})
+            except Exception:
+                pass
+
+    # input_path may be set via /api/upload first; if not, use video_url as a hint
+    input_path = job.get("input_path") or clip_req.video_url or ""
+    await clipper_module.run_clip_job(job_id, input_path, clip_req.query, on_progress, on_complete, on_error)
+
+    return {"job_id": job_id, "status": "queued", "query": clip_req.query}
+
 
 @app.get("/api/jobs/{job_id}")
-async def get_job_status(job_id: str):
-    """Get the status of a clip job"""
-    return {
-        "job_id": job_id,
-        "status": "processing",
-        "progress": 45,
-        "message": "Analyzing footage..."
-    }
+async def get_job_status(job_id: str, request: Request = None):
+    user = await auth_module.get_current_user(request=request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    job = await db.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    if job["user_id"] != user["sub"]:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    return job
+
+
+@app.get("/api/jobs")
+async def list_jobs(request: Request = None):
+    user = await auth_module.get_current_user(request=request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    return await db.get_user_jobs(user["sub"])
+
+
+@app.get("/api/download/{job_id}")
+async def download_clip(job_id: str, request: Request = None):
+    user = await auth_module.get_current_user(request=request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    job = await db.get_job(job_id)
+    if not job or job["user_id"] != user["sub"]:
+        raise HTTPException(status_code=404, detail="Not found")
+    if not job.get("output_path") or not Path(job["output_path"]).exists():
+        raise HTTPException(status_code=404, detail="Output file not ready")
+    return FileResponse(job["output_path"], media_type="video/mp4",
+                        filename=f"afromations-clip-{job_id}.mp4")
+
+
+# ─── WebSocket for real-time job progress ─────────────────────────────────────
+
+@app.websocket("/ws/jobs/{job_id}")
+async def ws_job_progress(websocket: WebSocket, job_id: str):
+    await websocket.accept()
+    _ws_connections.setdefault(job_id, []).append(websocket)
+    try:
+        # Send current state immediately
+        job = await db.get_job(job_id)
+        if job:
+            await websocket.send_json({
+                "job_id": job_id,
+                "status": job["status"],
+                "progress": job.get("progress", 0),
+                "message": job.get("message", ""),
+            })
+        # Keep alive until client disconnects
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        pass
+    finally:
+        conns = _ws_connections.get(job_id, [])
+        if websocket in conns:
+            conns.remove(websocket)
+
+
+# ─── Projects ─────────────────────────────────────────────────────────────────
+
+@app.post("/api/projects")
+async def create_project_route(name: str, description: str = None, request: Request = None):
+    user = await auth_module.get_current_user(request=request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    return await db.create_project(user["sub"], name, description)
+
+
+@app.get("/api/projects")
+async def list_projects(request: Request = None):
+    user = await auth_module.get_current_user(request=request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    return await db.get_user_projects(user["sub"])
 
 
 # =============================================================================
@@ -1625,7 +1870,7 @@ async def get_job_status(job_id: str):
 
 if __name__ == "__main__":
     uvicorn.run(
-        "web_redesign:app",
+        "web:app",
         host=settings.HOST,
         port=settings.PORT,
         reload=settings.DEBUG
